@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import json
+import configparser
 from pathlib import Path
 import tempfile
 import unittest
@@ -46,6 +47,17 @@ class ArtifactGenerationTests(unittest.TestCase):
         make_root(self.root, bundle)
         ini = generator.build_outputs(self.root)["macflow.ini"].decode("utf-16")
         self.assertIn("blocked_reason=中文说明：待实测", ini)
+
+    def test_runtime_source_hashes_match_every_packaged_source(self):
+        outputs = generator.build_outputs(self.root)
+        ini = configparser.ConfigParser(interpolation=None)
+        ini.read_string(outputs["macflow.ini"].decode("utf-16"))
+        manifest = json.loads(outputs["manifest.json"])
+        self.assertEqual({"schema.json", "apps.yaml", "mappings.yaml", "release.yaml"}, set(ini["sources"]))
+        for name, digest in ini["sources"].items():
+            actual = hashlib.sha256((self.root / "config" / name).read_bytes()).hexdigest()
+            self.assertEqual(actual, digest)
+            self.assertEqual(actual, manifest["sources"][name])
 
     def test_check_detects_missing_and_tampered_artifact_without_writing(self):
         with self.assertRaises(ConfigError):

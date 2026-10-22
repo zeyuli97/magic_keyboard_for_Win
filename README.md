@@ -8,15 +8,20 @@
 
 ## Windows 启动
 
-使用完整项目目录。需要已安装的 **64 位 AutoHotkey v2.0.19+**；不以管理员运行。构建配置需要 Python 3，运行已生成配置不需要 Python。工具不会安装依赖、驱动或自启。
+使用完整项目目录或解压后的预览包。需要已安装的 **64 位 AutoHotkey v2.0.19+**；不以管理员运行。构建配置需要 Python 3.9+，运行预览包内已生成配置不需要 Python。工具不会安装依赖、驱动或自启。
 
-在项目根目录的普通 PowerShell 中执行：
+从源码修改配置后，在项目根目录的普通 PowerShell 中先执行（预览包未修改时可跳过这组 Python 命令）：
 
 ~~~powershell
 py -3 tools\validate-config.py
 py -3 tools\generate-config.py
 py -3 tools\generate-config.py --check
 py -3 -m unittest discover -s tests -p "test_*.py"
+~~~
+
+检查 AHK 后启动：
+
+~~~powershell
 $ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
 powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath $ahk -SelfTest
 & $ahk .\src\ahk\main.ahk
@@ -35,6 +40,16 @@ VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscod
 检查 Ctrl+C、Win+E/L、Alt+Tab。无法恢复或卡键时停止试用，按[恢复说明](docs/rollback.md)处理并记 FAIL。VS Code 持久配置仅响应专用组合；卸载按集成说明只撤销自身增量，保留个人后续修改。默认没有自启、驱动或注册表映射。
 
 ## 配置与验收
+
+| 目录 | 内容 |
+| --- | --- |
+| src/ahk/ | 入口、托盘生命周期、输入状态、应用路由与映射 |
+| config/ → build/generated/ | 规则与验收状态 → 确定性运行配置和校验和 |
+| integrations/ | VS Code 人工集成及 Windows Terminal 限制 |
+| tools/ | 配置校验/生成、Windows 发现/smoke、预览包构建 |
+| tests/、docs/ | 静态测试、真机清单、兼容矩阵、原规格与实现决策 |
+
+macOS/Linux 开发检查：python3 -B tools/validate-config.py、python3 -B tools/generate-config.py --check、python3 -B -m unittest discover -s tests -p 'test_*.py'。运行 python3 -B tools/package-preview.py 生成 dist/MacFlow-development-preview.zip；不包含 AHK 运行时。
 
 config/*.yaml 是严格 JSON 子集，修改后重新校验生成；不要手改 build/generated/。SHA256 仅检查损坏/陈旧，不是安全签名。
 

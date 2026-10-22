@@ -6,7 +6,7 @@
 
 生成器测试覆盖确定性、UTF-16 中文 round-trip、SHA256、缺失/篡改/陈旧文件及不写入的 --check。VS Code 数据检查覆盖触发键对应、noop、选区条件与跳过 shell 设置，不证明真实应用行为。
 
-已在临时整合目录合并读取 Lead 的 schema/release/generator、profiles 的配置/桥接和本 QA 流程，执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：53 项通过，0 项跳过。实际组合配置静态校验有效，prototype/v1 均报告 NOT ACCEPTED。最终主分支 commit 验证由 Lead 补充；这不是 AHK 或硬件结果。
+已在当前项目主分支整合目录执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：**54 项通过，0 项跳过**，包含运行配置中的全部源文件 SHA256 对应检查。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；这不是 AHK 或硬件结果。Windows 结果需另记实际测试 commit 与配置 hash。
 
 | 项目 | 状态 | 原因 |
 | --- | --- | --- |

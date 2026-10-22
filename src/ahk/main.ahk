@@ -21,7 +21,8 @@ global MF := {
     VscodeReady: false, OwnedKeys: Map(), SwitcherActive: false,
     SwitchingHwnd: 0, SwitcherStarted: 0, Registered: [],
     SessionRegistered: false, MutexHandle: 0, TrayReady: false,
-    LastReason: "Started in Native Mode", ShuttingDown: false
+    LastReason: "Started in Native Mode", ShuttingDown: false,
+    InputDispatchActive: false, ResetPending: false
 }
 MF_Main()
 

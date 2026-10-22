@@ -1,0 +1,16 @@
+{
+  "artifacts": {
+    "macflow.ini": "fcac4113d35de9f949385c097f1f2391254591847985feea3e8b6da8273ff837"
+  },
+  "delivery_status": "DEVELOPMENT PREVIEW",
+  "hardware_validation": "NOT TESTED",
+  "mode": "ahk-only",
+  "schema_version": 1,
+  "source_hash": "982273ea0c68badc6c5834c14318aba51e8727ea864243c4c9a2a13ea05491ab",
+  "sources": {
+    "apps.yaml": "0184cb4cee7b159992818e8faaf769c37ab1bd80de737053bb584d49f2532c84",
+    "mappings.yaml": "0b0db7debb72817bc2b329f3824fe6654514ad39638967dd263d061522caaa12",
+    "release.yaml": "6fc893de54b7db0575ed1c19910add6180857bd9da3840bd08dac87d45abd79c",
+    "schema.json": "2d27592b83c026791c2c0512d758bd80d1b9988845ed53ae167a0a693d21a3e3"
+  }
+}

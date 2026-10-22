@@ -17,7 +17,8 @@ def main():
     archive = destination / "MacFlow-development-preview.zip"
     files = [ROOT / name for name in ("README.md", "AGENTS.md", "PLAN.md")]
     for directory in ("src", "build/generated", "config", "integrations", "docs", "tools", "tests"):
-        files.extend(p for p in (ROOT / directory).rglob("*") if p.is_file()
+        files.extend(p for p in (ROOT / directory).rglob("*") if p.is_file() and not p.is_symlink()
+                     and not any(part.startswith(".") for part in p.relative_to(ROOT).parts)
                      and "__pycache__" not in p.parts and "local" not in p.parts and p.suffix != ".pyc")
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
         for path in sorted(set(files)):

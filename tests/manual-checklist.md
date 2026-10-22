@@ -26,3 +26,5 @@ PASS 必须全部预期实测符合。BLOCKED 有明确障碍；NOT TESTED 未�
 恢复后检查 Ctrl+C、Win+E/L、Alt+Tab 和中文输入。异常记 FAIL 并停止，按 docs/rollback.md 恢复。不能把重启恢复记成“2 秒恢复通过”。
 
 T07/T07d 追加：切换器保持合成 Alt 时按下物理 Ctrl、右 Alt、右 Win 等额外修饰键，应退出切换并让原生组合透传；在动作触发与鼠标 Disable 同时发生、焦点改变与松键交错时重复验证，不能在 Disabled 后重新合成按住键。
+
+T07/T07b 追加：在反复触发 ⌘Tab 的同时锁屏/解锁、睡眠/唤醒，覆盖合成 Alt-down 发送中到达的会话/电源消息。返回后必须 Native，Alt 不得残留；该路径有延迟清理实现但未经 Windows 验证。

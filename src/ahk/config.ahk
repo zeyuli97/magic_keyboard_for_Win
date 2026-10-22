@@ -4,6 +4,11 @@ MF_LoadConfig(root) {
     expected := Trim(FileRead(path ".sha256", "UTF-8"))
     if !RegExMatch(expected, "^[a-f0-9]{64}$") || MF_SHA256(path) != expected
         throw Error("Generated configuration checksum mismatch. Regenerate on the development machine.")
+    for source in ["schema.json", "mappings.yaml", "apps.yaml", "release.yaml"] {
+        digest := MF_Ini(path, "sources", source)
+        if !RegExMatch(digest, "^[a-f0-9]{64}$") || MF_SHA256(root "\config\" source) != digest
+            throw Error("Source configuration changed/missing. Regenerate before enabling: " source)
+    }
     if MF_Ini(path, "meta", "schema_version") != "1"
         throw Error("Unsupported configuration schema.")
     if MF_Ini(path, "meta", "mode") != "ahk-only"
@@ -49,6 +54,12 @@ MF_LoadConfig(root) {
     }
     processes := Map()
     profileIds := Map()
+    profilePolicy := Map(
+        "chrome", {Process: "chrome.exe", Contexts: ["edit", "text", "browser"]},
+        "notepad", {Process: "notepad.exe", Contexts: ["edit", "text"]},
+        "vscode", {Process: "code.exe", Contexts: ["vscode"]},
+        "explorer", {Process: "explorer.exe", Contexts: ["explorer"]},
+        "windows_terminal", {Process: "windowsterminal.exe", Contexts: ["terminal"]})
     Loop profileCount {
         section := "profile." A_Index
         profile := {Id: MF_Ini(path, section, "id"), Processes: MF_IniList(path, section, "processes"),
@@ -58,6 +69,12 @@ MF_LoadConfig(root) {
             throw Error("Invalid/duplicate profile.")
         profileIds[profile.Id] := true
         MF_ValidateContexts(profile.Contexts)
+        policy := profilePolicy[profile.Id]
+        if profile.Processes.Length != 1 || profile.Processes[1] != policy.Process
+            throw Error("Profile process identity does not match this backend.")
+        for context in profile.Contexts
+            if !MF_Contains(policy.Contexts, context)
+                throw Error("Profile context violates the native/terminal boundary.")
         if profile.Id = "windows_terminal" && profile.Enabled
             throw Error("Windows Terminal must bypass in this preview.")
         if profile.Id = "vscode" && !profile.RequiresIntegration

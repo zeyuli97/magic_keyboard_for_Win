@@ -18,6 +18,24 @@ MF_RegisterMappings() {
             HotIf()
         }
     }
+    ; These observers never suppress native keys. Cleanup happens on modifier
+    ; transitions as well as the polling fallback, not only on the next Tab.
+    HotIf(MF_SwitcherWatchActive)
+    try {
+        for key in ["LCtrl", "RCtrl", "RWin", "RAlt", "LAlt", "Esc", "LWin up"]
+            Hotkey("$~*" key, MF_SwitcherTransition, "On I1")
+    } finally {
+        HotIf()
+    }
+}
+
+MF_SwitcherWatchActive(*) {
+    global MF
+    return MF.SwitcherActive
+}
+
+MF_SwitcherTransition(*) {
+    MF_CancelSwitch()
 }
 
 MF_HotkeyName(chord) {
@@ -62,10 +80,38 @@ MF_CanHandle(chord, *) {
 
 MF_HandleChord(chord, *) {
     global MF
+    ; Critical buffers ordinary hotkeys/timers, but low-numbered OnMessage
+    ; callbacks can still interrupt. Reset must defer ownership cleanup until
+    ; this transaction returns; otherwise an interrupted Alt-down could resume
+    ; after its ownership record has already been cleared.
+    previousCritical := A_IsCritical
+    Critical("On")
+    MF.InputDispatchActive := true
+    try MF_HandleChordLocked(chord)
+    finally {
+        MF.InputDispatchActive := false
+        try {
+            if MF.ResetPending
+                MF_ResetInput()
+        } finally Critical(previousCritical)
+    }
+}
+
+MF_HandleChordLocked(chord) {
+    global MF
     if !MF.Enabled || !MF_PhysicalChordMatches(chord)
         return
     if MF.SwitcherActive && (chord = "LWin+Tab" || chord = "LWin+Shift+Tab") {
+        hwnd := WinExist("A")
+        if !hwnd || !MF_ForegroundSafe(hwnd) {
+            MF_CancelSwitch()
+            return
+        }
         MF_RunAction(chord = "LWin+Tab" ? "app_next" : "app_previous", {Id: "switcher"})
+        return
+    }
+    if MF.SwitcherActive {
+        MF_CancelSwitch()
         return
     }
     ; Recheck focus after hook dispatch. If it moved, consume instead of injecting
@@ -88,7 +134,16 @@ MF_HandleChord(chord, *) {
 MF_SendTap(keys) {
     global MF
     ; Complete chords only; held synthetic Alt is managed explicitly elsewhere.
+    if !MF.Enabled
+        return
     if MF.HasOwnProp("DispatchHwnd") && MF.DispatchHwnd && WinExist("A") != MF.DispatchHwnd
+        return
+    hwnd := WinExist("A")
+    if !hwnd || !MF_ForegroundSafe(hwnd) {
+        MF_ResetInput()
+        return
+    }
+    if !MF.Enabled || WinExist("A") != hwnd
         return
     SendLevel(0)
     SendEvent(keys)
@@ -96,6 +151,8 @@ MF_SendTap(keys) {
 
 MF_HoldSynthetic(key) {
     global MF
+    if !MF.Enabled || MF.ResetPending || !MF.InputDispatchActive
+        throw Error("Cannot acquire a synthetic modifier in Native Mode.")
     if key != "LAlt"
         throw Error("Unexpected held synthetic key.")
     if GetKeyState(key, "P")
@@ -111,12 +168,15 @@ MF_ReleaseSynthetic(key) {
     global MF
     if !MF.OwnedKeys.Has(key)
         return
-    MF.OwnedKeys.Delete(key)
     ; If physically pressed meanwhile, its eventual physical up owns release.
     if !GetKeyState(key, "P") {
         SendLevel(0)
         SendEvent("{Blind}{" key " up}")
     }
+    ; Keep ownership until key-up completes, including if OnExit interrupts.
+    ; A nested cleanup may have already released/deleted the same owner.
+    if MF.OwnedKeys.Has(key)
+        MF.OwnedKeys.Delete(key)
 }
 
 MF_CancelSwitch() {
@@ -129,6 +189,14 @@ MF_CancelSwitch() {
 
 MF_ResetInput() {
     global MF
+    if MF.InputDispatchActive && !MF.ShuttingDown {
+        ; MF_Disable has already stopped new routing. Keep owned state intact
+        ; until the interrupted send finishes; the dispatch finally releases it.
+        MF.ResetPending := true
+        return
+    }
+    ; OnExit is final: no interrupted sender will resume after process exit.
+    MF.ResetPending := false
     MF_CancelSwitch()
     if MF.HasOwnProp("Pending")
         MF.Pending.Clear()
@@ -140,7 +208,8 @@ MF_PollInput() {
     global MF
     if !MF.SwitcherActive
         return
-    if !MF.Enabled || !GetKeyState("LWin", "P") || GetKeyState("Esc", "P") || A_TickCount - MF.SwitcherStarted > 10000 {
+    foreignModifier := GetKeyState("LCtrl", "P") || GetKeyState("RCtrl", "P") || GetKeyState("RWin", "P") || GetKeyState("RAlt", "P") || GetKeyState("LAlt", "P")
+    if !MF.Enabled || !GetKeyState("LWin", "P") || GetKeyState("Esc", "P") || foreignModifier || A_TickCount - MF.SwitcherStarted > 10000 {
         MF_CancelSwitch()
         return
     }

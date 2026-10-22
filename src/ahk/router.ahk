@@ -56,7 +56,28 @@ MF_ProcessNotElevated(pid) {
         elevated := Buffer(4, 0), length := 0
         if !DllCall("Advapi32\GetTokenInformation", "Ptr", token, "Int", 20, "Ptr", elevated, "UInt", 4, "UInt*", &length)
             return false
-        return NumGet(elevated, 0, "UInt") = 0
+        if NumGet(elevated, 0, "UInt") != 0
+            return false
+        ; A non-elevated token alone does not establish its integrity level.
+        length := 0
+        DllCall("Advapi32\GetTokenInformation", "Ptr", token, "Int", 25, "Ptr", 0, "UInt", 0, "UInt*", &length)
+        if length < A_PtrSize + 4 || length > 4096
+            return false
+        mandatoryLabel := Buffer(length, 0)
+        if !DllCall("Advapi32\GetTokenInformation", "Ptr", token, "Int", 25, "Ptr", mandatoryLabel, "UInt", length, "UInt*", &length)
+            return false
+        sid := NumGet(mandatoryLabel, 0, "Ptr")
+        if !sid || !DllCall("Advapi32\IsValidSid", "Ptr", sid, "Int")
+            return false
+        countPtr := DllCall("Advapi32\GetSidSubAuthorityCount", "Ptr", sid, "Ptr")
+        if !countPtr || !(count := NumGet(countPtr, 0, "UChar"))
+            return false
+        ridPtr := DllCall("Advapi32\GetSidSubAuthority", "Ptr", sid, "UInt", count - 1, "Ptr")
+        if !ridPtr
+            return false
+        rid := NumGet(ridPtr, 0, "UInt")
+        ; Known low/medium only; high, system, medium-plus and unknown bypass.
+        return rid = 0x1000 || rid = 0x2000
     } finally {
         if token
             DllCall("Kernel32\CloseHandle", "Ptr", token)

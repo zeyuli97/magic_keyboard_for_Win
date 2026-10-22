@@ -40,6 +40,9 @@ def build_outputs(root):
         ("bypass_processes", apps["bypass_processes"]),
     ):
         field(key, value)
+    lines.extend(["", "[sources]"])
+    for name, digest in sorted(sources.items()):
+        field(name, digest)
     for index, rule in enumerate(mappings, 1):
         lines.extend(["", "[rule.%d]" % index])
         for key in ("id", "enabled", "physical_chord", "contexts", "action", "priority", "blocked_reason"):
