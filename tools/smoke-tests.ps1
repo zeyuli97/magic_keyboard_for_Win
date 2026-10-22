@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $MainScript = Join-Path $ProjectRoot "src\ahk\main.ahk"
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
-    Write-Error "This check requires Windows. No runtime/hardware test was performed."
+    [Console]::Error.WriteLine("This check requires Windows. No runtime/hardware test was performed.")
     exit 2
 }
 if (-not $AutoHotkeyPath) {
@@ -19,40 +19,94 @@ if (-not $AutoHotkeyPath) {
     if (Test-Path -LiteralPath $Candidate -PathType Leaf) { $AutoHotkeyPath = $Candidate }
 }
 if (-not $AutoHotkeyPath -or -not (Test-Path -LiteralPath $AutoHotkeyPath -PathType Leaf)) {
-    Write-Error "Supply an already installed AHK v2.0.19+ 64-bit runtime with -AutoHotkeyPath. Nothing was installed."
+    [Console]::Error.WriteLine("Supply an installed AHK v2.0.19+ 64-bit runtime with -AutoHotkeyPath. Nothing was installed.")
     exit 2
 }
 $AutoHotkeyPath = (Resolve-Path -LiteralPath $AutoHotkeyPath).Path
 if (-not (Test-Path -LiteralPath $MainScript -PathType Leaf)) {
-    Write-Error "Missing main.ahk."
+    [Console]::Error.WriteLine("Missing main.ahk.")
     exit 1
 }
-if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot "build\generated\macflow.ini"))) {
-    Write-Error "Missing generated configuration. Run Python config validation/generation first."
+if ($SelfTest -and -not (Test-Path -LiteralPath (Join-Path $ProjectRoot "build\generated\macflow.ini"))) {
+    [Console]::Error.WriteLine("Missing generated configuration. Run Python config validation/generation first.")
     exit 1
 }
+
 function Invoke-AhkCheck([string[]] $RuntimeArgs, [string] $Label) {
-    $Arguments = @("/ErrorStdOut=UTF-8") + $RuntimeArgs
-    $Child = Start-Process -FilePath $AutoHotkeyPath -ArgumentList $Arguments -PassThru -NoNewWindow
-    if (-not $Child.WaitForExit(15000)) {
-        Stop-Process -Id $Child.Id -ErrorAction SilentlyContinue
-        throw "$Label timed out; only the process started by this check was stopped."
+    # /validate exists in v2.0.19's ParseCmdLineArgs and is documented at:
+    # https://www.autohotkey.com/docs/v2/Scripts.htm#validate
+    # It loads the original main.ahk then exits without executing its startup.
+    # All switches precede the script path; quoted paths stay single arguments.
+    $StartInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $StartInfo.FileName = $AutoHotkeyPath
+    $StartInfo.Arguments = (@("/ErrorStdOut=UTF-8") + $RuntimeArgs) -join " "
+    $StartInfo.WorkingDirectory = $ProjectRoot
+    $StartInfo.UseShellExecute = $false
+    $StartInfo.CreateNoWindow = $true
+    $StartInfo.RedirectStandardOutput = $true
+    $StartInfo.RedirectStandardError = $true
+    $StartInfo.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $StartInfo.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
+
+    $Child = [System.Diagnostics.Process]::new()
+    $Child.StartInfo = $StartInfo
+    $Started = $false
+    try {
+        $Started = $Child.Start()
+        if (-not $Started) { throw "$Label could not start the supplied runtime." }
+
+        # Drain both pipes concurrently, so a long parser diagnostic cannot fill
+        # one pipe and deadlock while the parent waits on the other.
+        $StdoutTask = $Child.StandardOutput.ReadToEndAsync()
+        $StderrTask = $Child.StandardError.ReadToEndAsync()
+        $TimedOut = -not $Child.WaitForExit(15000)
+        if ($TimedOut) {
+            $Child.Kill()
+            if (-not $Child.WaitForExit(2000)) {
+                throw "$Label exceeded 15 seconds; termination of this check's child could not be confirmed."
+            }
+        }
+        $StreamsClosed = [System.Threading.Tasks.Task]::WaitAll(
+            [System.Threading.Tasks.Task[]]@($StdoutTask, $StderrTask), 2000)
+        if (-not $StreamsClosed) {
+            throw "$Label output capture did not close after the runtime exited."
+        }
+        $StdoutText = $StdoutTask.GetAwaiter().GetResult()
+        $StderrText = $StderrTask.GetAwaiter().GetResult()
+        if ($StdoutText) { [Console]::Out.Write($StdoutText) }
+        if ($StderrText) { [Console]::Error.Write($StderrText) }
+        if ($TimedOut) {
+            throw "$Label exceeded 15 seconds; only this check's child process was stopped."
+        }
+        if ($Child.ExitCode -ne 0) {
+            throw "$Label failed with exit code $($Child.ExitCode); see captured diagnostics above."
+        }
+        Write-Output "$Label passed. This is not a keyboard compatibility test."
     }
-    $Child.Refresh()
-    if ($Child.ExitCode -ne 0) {
-        throw "$Label failed with exit code $($Child.ExitCode)."
+    finally {
+        if ($Started) {
+            try {
+                if (-not $Child.HasExited) { $Child.Kill() }
+            }
+            catch {
+                [Console]::Error.WriteLine("Could not confirm cleanup of this check's child process.")
+            }
+        }
+        $Child.Dispose()
     }
-    Write-Output "$Label passed. This is not a keyboard compatibility test."
 }
+
 try {
     Invoke-AhkCheck -RuntimeArgs @("/validate", ('"' + $MainScript + '"')) -Label "AHK syntax validation"
     if ($SelfTest) {
+        # This application-defined argument loads configuration in Native Mode
+        # and exits before hooks or mappings are installed.
         Invoke-AhkCheck -RuntimeArgs @(('"' + $MainScript + '"'), "--self-test") -Label "AHK Native Mode initialization"
     }
     Write-Output "No mapping was enabled; hardware results remain NOT TESTED."
     exit 0
 }
 catch {
-    Write-Error $_
+    [Console]::Error.WriteLine($_.Exception.Message)
     exit 1
 }
