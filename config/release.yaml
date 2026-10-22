@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "delivery_status": "DEVELOPMENT PREVIEW",
+  "mode": "ahk-only",
+  "baseline": [
+    "Windows 10/11 exact build pending",
+    "Magic Keyboard model and transport pending",
+    "Chrome",
+    "Notepad",
+    "VS Code Editor and Integrated Terminal",
+    "Windows Terminal + PowerShell",
+    "Explorer",
+    "User Chinese IME pending"
+  ],
+  "cases": [
+    {
+      "id": "T01",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T01b",
+      "priority": "P1",
+      "required_prototype": false,
+      "required_v1": true,
+      "status": "BLOCKED",
+      "reason": "Command+L system interception unresolved; Windows hardware NOT TESTED."
+    },
+    {
+      "id": "T02",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T03",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "BLOCKED",
+      "reason": "Windows Terminal selection adapter unavailable; host bypasses. Hardware NOT TESTED."
+    },
+    {
+      "id": "T04",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T05",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T06",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T06b",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T07",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T07b",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T07c",
+      "priority": "CONDITIONAL",
+      "required_prototype": false,
+      "required_v1": false,
+      "status": "NOT TESTED",
+      "reason": "Not applicable to selected single-process AHK mode; no Kanata integration."
+    },
+    {
+      "id": "T07d",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T08",
+      "priority": "P0",
+      "required_prototype": true,
+      "required_v1": true,
+      "status": "NOT TESTED",
+      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+    },
+    {
+      "id": "T09",
+      "priority": "P1",
+      "required_prototype": false,
+      "required_v1": true,
+      "status": "BLOCKED",
+      "reason": "Recycle-bin-only deletion unavailable and disabled. Other Explorer actions hardware NOT TESTED."
+    }
+  ]
+}
+
