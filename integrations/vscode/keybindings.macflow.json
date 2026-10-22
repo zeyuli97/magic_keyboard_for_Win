@@ -1,0 +1,170 @@
+[
+  {
+    "key": "ctrl+alt+f13",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f14",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f15",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f16",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f17",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f18",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f19",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f20",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f21",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f22",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f23",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f24",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+shift+f13",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+shift+f14",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+shift+f15",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+shift+f16",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+shift+f17",
+    "command": "noop"
+  },
+  {
+    "key": "ctrl+alt+f13",
+    "command": "editor.action.clipboardCopyAction",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f14",
+    "command": "editor.action.clipboardPasteAction",
+    "when": "editorTextFocus && !terminalFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+f15",
+    "command": "editor.action.clipboardCutAction",
+    "when": "editorTextFocus && !terminalFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+f16",
+    "command": "editor.action.selectAll",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f17",
+    "command": "undo",
+    "when": "editorTextFocus && !terminalFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+f18",
+    "command": "redo",
+    "when": "editorTextFocus && !terminalFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+f19",
+    "command": "workbench.action.files.save",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f20",
+    "command": "actions.find",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f21",
+    "command": "cursorWordLeft",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f22",
+    "command": "cursorWordRight",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f23",
+    "command": "cursorWordLeftSelect",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f24",
+    "command": "cursorWordRightSelect",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+shift+f13",
+    "command": "deleteWordLeft",
+    "when": "editorTextFocus && !terminalFocus && !editorReadonly"
+  },
+  {
+    "key": "ctrl+alt+shift+f14",
+    "command": "cursorHome",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+shift+f15",
+    "command": "cursorEnd",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+shift+f16",
+    "command": "cursorTop",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+shift+f17",
+    "command": "cursorBottom",
+    "when": "editorTextFocus && !terminalFocus"
+  },
+  {
+    "key": "ctrl+alt+f13",
+    "command": "noop",
+    "when": "terminalFocus && !terminalTextSelected"
+  },
+  {
+    "key": "ctrl+alt+f13",
+    "command": "workbench.action.terminal.copySelection",
+    "when": "terminalFocus && terminalTextSelected"
+  },
+  {
+    "key": "ctrl+alt+f14",
+    "command": "workbench.action.terminal.paste",
+    "when": "terminalFocus"
+  }
+]

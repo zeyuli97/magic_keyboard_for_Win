@@ -1,0 +1,8 @@
+{
+  "terminal.integrated.sendKeybindingsToShell": false,
+  "terminal.integrated.commandsToSkipShell": [
+    "noop",
+    "workbench.action.terminal.copySelection",
+    "workbench.action.terminal.paste"
+  ]
+}

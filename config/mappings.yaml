@@ -1,0 +1,390 @@
+{
+  "schema_version": 1,
+  "mappings": [
+    {
+      "id": "global_copy",
+      "enabled": true,
+      "physical_chord": "LWin+c",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "copy",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_paste",
+      "enabled": true,
+      "physical_chord": "LWin+v",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "paste",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_cut",
+      "enabled": true,
+      "physical_chord": "LWin+x",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "cut",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_select_all",
+      "enabled": true,
+      "physical_chord": "LWin+a",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "select_all",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_undo",
+      "enabled": true,
+      "physical_chord": "LWin+z",
+      "contexts": [
+        "edit",
+        "vscode"
+      ],
+      "action": "undo",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_redo",
+      "enabled": true,
+      "physical_chord": "LWin+Shift+z",
+      "contexts": [
+        "edit",
+        "vscode"
+      ],
+      "action": "redo",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_save",
+      "enabled": true,
+      "physical_chord": "LWin+s",
+      "contexts": [
+        "edit",
+        "vscode"
+      ],
+      "action": "save",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_find",
+      "enabled": true,
+      "physical_chord": "LWin+f",
+      "contexts": [
+        "edit",
+        "vscode"
+      ],
+      "action": "find",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_word_left",
+      "enabled": true,
+      "physical_chord": "LAlt+Left",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "word_left",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_word_right",
+      "enabled": true,
+      "physical_chord": "LAlt+Right",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "word_right",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_select_word_left",
+      "enabled": true,
+      "physical_chord": "LAlt+Shift+Left",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "select_word_left",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_select_word_right",
+      "enabled": true,
+      "physical_chord": "LAlt+Shift+Right",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "select_word_right",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_delete_word",
+      "enabled": true,
+      "physical_chord": "LAlt+Backspace",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "delete_word",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_line_start",
+      "enabled": true,
+      "physical_chord": "LWin+Left",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "line_start",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_line_end",
+      "enabled": true,
+      "physical_chord": "LWin+Right",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "line_end",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_document_start",
+      "enabled": true,
+      "physical_chord": "LWin+Up",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "document_start",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "text_document_end",
+      "enabled": true,
+      "physical_chord": "LWin+Down",
+      "contexts": [
+        "text",
+        "vscode"
+      ],
+      "action": "document_end",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_app_next",
+      "enabled": true,
+      "physical_chord": "LWin+Tab",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "app_next",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "global_app_previous",
+      "enabled": true,
+      "physical_chord": "LWin+Shift+Tab",
+      "contexts": [
+        "edit",
+        "vscode",
+        "explorer"
+      ],
+      "action": "app_previous",
+      "priority": 10,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_new",
+      "enabled": true,
+      "physical_chord": "LWin+t",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_new",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_close",
+      "enabled": true,
+      "physical_chord": "LWin+w",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_close",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_reload",
+      "enabled": true,
+      "physical_chord": "LWin+r",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_reload",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_restore",
+      "enabled": true,
+      "physical_chord": "LWin+Shift+t",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_restore",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_back",
+      "enabled": true,
+      "physical_chord": "LWin+[",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_back",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_forward",
+      "enabled": true,
+      "physical_chord": "LWin+]",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_forward",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "browser_address",
+      "enabled": false,
+      "physical_chord": "LWin+l",
+      "contexts": [
+        "browser"
+      ],
+      "action": "browser_address",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": "BLOCKED: Windows reserves Win+L; user-mode hooks cannot guarantee interception. Use physical Ctrl+L."
+    },
+    {
+      "id": "explorer_new",
+      "enabled": true,
+      "physical_chord": "LWin+Shift+n",
+      "contexts": [
+        "explorer"
+      ],
+      "action": "explorer_new",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": ""
+    },
+    {
+      "id": "explorer_delete",
+      "enabled": false,
+      "physical_chord": "LWin+Backspace",
+      "contexts": [
+        "explorer"
+      ],
+      "action": "explorer_delete",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": "BLOCKED: Explorer selection, focus and recycle-bin-only behavior need Windows validation before enabling deletion."
+    },
+    {
+      "id": "terminal_copy",
+      "enabled": false,
+      "physical_chord": "LWin+c",
+      "contexts": [
+        "terminal"
+      ],
+      "action": "terminal_copy",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": "BLOCKED: standalone Windows Terminal selection/no-selection copy cannot be established reliably through the AHK backend."
+    },
+    {
+      "id": "terminal_paste",
+      "enabled": false,
+      "physical_chord": "LWin+v",
+      "contexts": [
+        "terminal"
+      ],
+      "action": "terminal_paste",
+      "priority": 100,
+      "on_unmatched": "passthrough",
+      "blocked_reason": "BLOCKED: Windows Terminal is entirely bypassed until its copy/no-op and physical-Control requirements are validated."
+    }
+  ]
+}

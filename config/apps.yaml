@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "allowed_hkls": [
+    "04090409"
+  ],
+  "bypass_processes": [
+    "cmd.exe",
+    "powershell.exe",
+    "pwsh.exe",
+    "windowsterminal.exe",
+    "conhost.exe",
+    "openconsole.exe",
+    "wsl.exe",
+    "mstsc.exe",
+    "msrdc.exe"
+  ],
+  "profiles": [
+    {
+      "id": "chrome",
+      "processes": [
+        "chrome.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text",
+        "browser"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "notepad",
+      "processes": [
+        "notepad.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "vscode",
+      "processes": [
+        "code.exe"
+      ],
+      "contexts": [
+        "vscode"
+      ],
+      "enabled": true,
+      "requires_integration": true
+    },
+    {
+      "id": "explorer",
+      "processes": [
+        "explorer.exe"
+      ],
+      "contexts": [
+        "explorer"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "windows_terminal",
+      "processes": [
+        "windowsterminal.exe"
+      ],
+      "contexts": [
+        "terminal"
+      ],
+      "enabled": false,
+      "requires_integration": false
+    }
+  ]
+}
