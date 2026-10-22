@@ -1,0 +1,165 @@
+{
+  "mappings": {
+    "schema_version": 1,
+    "mappings": [
+      {
+        "id": "copy",
+        "enabled": true,
+        "physical_chord": "LWin+c",
+        "contexts": [
+          "edit"
+        ],
+        "action": "copy",
+        "priority": 10,
+        "on_unmatched": "passthrough",
+        "blocked_reason": ""
+      }
+    ]
+  },
+  "apps": {
+    "schema_version": 1,
+    "allowed_hkls": [
+      "04090409"
+    ],
+    "bypass_processes": [
+      "mstsc.exe"
+    ],
+    "profiles": [
+      {
+        "id": "chrome",
+        "processes": [
+          "chrome.exe"
+        ],
+        "contexts": [
+          "edit",
+          "text",
+          "browser"
+        ],
+        "enabled": true,
+        "requires_integration": false
+      }
+    ]
+  },
+  "release": {
+    "schema_version": 1,
+    "delivery_status": "DEVELOPMENT PREVIEW",
+    "mode": "ahk-only",
+    "baseline": [
+      "Synthetic fixture; not an installed environment"
+    ],
+    "cases": [
+      {
+        "id": "T01",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T01b",
+        "priority": "P1",
+        "required_prototype": false,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T02",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T03",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T04",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T05",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T06",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T06b",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T07",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T07b",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T07c",
+        "priority": "CONDITIONAL",
+        "required_prototype": false,
+        "required_v1": false,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T07d",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T08",
+        "priority": "P0",
+        "required_prototype": true,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      },
+      {
+        "id": "T09",
+        "priority": "P1",
+        "required_prototype": false,
+        "required_v1": true,
+        "status": "NOT TESTED",
+        "reason": "Synthetic fixture only; no hardware evidence."
+      }
+    ]
+  }
+}

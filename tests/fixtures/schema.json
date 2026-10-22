@@ -1,0 +1,317 @@
+{
+  "mappings": {
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "integer",
+        "enum": [
+          1
+        ]
+      },
+      "mappings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]*$"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "physical_chord": {
+              "type": "string",
+              "pattern": "^(LWin|LAlt)(\\+Shift)?\\+([a-z]|Left|Right|Up|Down|Backspace|Tab|\\[|\\])$"
+            },
+            "contexts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "edit",
+                  "text",
+                  "browser",
+                  "explorer",
+                  "vscode",
+                  "terminal"
+                ]
+              },
+              "uniqueItems": true,
+              "minItems": 1
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "copy",
+                "paste",
+                "cut",
+                "select_all",
+                "undo",
+                "redo",
+                "save",
+                "find",
+                "word_left",
+                "word_right",
+                "select_word_left",
+                "select_word_right",
+                "delete_word",
+                "line_start",
+                "line_end",
+                "document_start",
+                "document_end",
+                "app_next",
+                "app_previous",
+                "browser_address",
+                "browser_new",
+                "browser_close",
+                "browser_reload",
+                "browser_restore",
+                "browser_back",
+                "browser_forward",
+                "explorer_new",
+                "explorer_delete",
+                "terminal_copy",
+                "terminal_paste"
+              ]
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "on_unmatched": {
+              "type": "string",
+              "enum": [
+                "passthrough"
+              ]
+            },
+            "blocked_reason": {
+              "type": "string",
+              "pattern": "^[^\\r\\n\\u0000]*$"
+            }
+          },
+          "required": [
+            "id",
+            "enabled",
+            "physical_chord",
+            "contexts",
+            "action",
+            "priority",
+            "on_unmatched",
+            "blocked_reason"
+          ],
+          "additionalProperties": false
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      }
+    },
+    "required": [
+      "schema_version",
+      "mappings"
+    ],
+    "additionalProperties": false
+  },
+  "apps": {
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "integer",
+        "enum": [
+          1
+        ]
+      },
+      "allowed_hkls": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "04090409"
+          ]
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      },
+      "bypass_processes": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+\\.exe$"
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      },
+      "profiles": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "enum": [
+                "chrome",
+                "notepad",
+                "vscode",
+                "explorer",
+                "windows_terminal"
+              ]
+            },
+            "processes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9_.-]+\\.exe$"
+              },
+              "uniqueItems": true,
+              "minItems": 1
+            },
+            "contexts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "edit",
+                  "text",
+                  "browser",
+                  "explorer",
+                  "vscode",
+                  "terminal"
+                ]
+              },
+              "uniqueItems": true,
+              "minItems": 1
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "requires_integration": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "processes",
+            "contexts",
+            "enabled",
+            "requires_integration"
+          ],
+          "additionalProperties": false
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      }
+    },
+    "required": [
+      "schema_version",
+      "allowed_hkls",
+      "bypass_processes",
+      "profiles"
+    ],
+    "additionalProperties": false
+  },
+  "release": {
+    "type": "object",
+    "properties": {
+      "schema_version": {
+        "type": "integer",
+        "enum": [
+          1
+        ]
+      },
+      "delivery_status": {
+        "type": "string",
+        "enum": [
+          "DEVELOPMENT PREVIEW"
+        ]
+      },
+      "mode": {
+        "type": "string",
+        "enum": [
+          "ahk-only"
+        ]
+      },
+      "baseline": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      },
+      "cases": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "enum": [
+                "T01",
+                "T01b",
+                "T02",
+                "T03",
+                "T04",
+                "T05",
+                "T06",
+                "T06b",
+                "T07",
+                "T07b",
+                "T07c",
+                "T07d",
+                "T08",
+                "T09"
+              ]
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "P0",
+                "P1",
+                "CONDITIONAL"
+              ]
+            },
+            "required_prototype": {
+              "type": "boolean"
+            },
+            "required_v1": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "NOT TESTED",
+                "BLOCKED",
+                "PASS",
+                "FAIL"
+              ]
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "priority",
+            "required_prototype",
+            "required_v1",
+            "status",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      }
+    },
+    "required": [
+      "schema_version",
+      "delivery_status",
+      "mode",
+      "baseline",
+      "cases"
+    ],
+    "additionalProperties": false
+  }
+}
+
