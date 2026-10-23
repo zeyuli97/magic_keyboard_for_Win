@@ -6,7 +6,7 @@
 
 生成器测试覆盖确定性、UTF-16 中文 round-trip、SHA256、缺失/篡改/陈旧文件及不写入的 --check。VS Code 数据检查覆盖触发键对应、noop、选区条件与跳过 shell 设置，不证明真实应用行为。
 
-已在当前项目主分支整合目录执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：**71 项通过，0 项跳过**。新增 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查及 Git 索引打包测试。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；这不是 AHK 或硬件结果。Windows 结果需另记实际测试 commit 与配置 hash。
+已在当前项目主分支整合目录执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：**74 项通过，0 项跳过**。新增 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查、Git 索引打包（含拒绝未暂存修改）测试，以及 CI 降权启动前清除 PSModulePath 的源码检查。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；这不是 AHK 或硬件结果。Windows 结果需另记实际测试 commit 与配置 hash。
 
 | 项目 | 状态 | 原因 |
 | --- | --- | --- |
@@ -36,4 +36,4 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 
 注册自检另用 -RegistrationTest，实际执行正常启动共用的 HotIf/Hotkey/emergency 注册路径，所有条件保持 Native，随后 Suspend/卸 hook 并退出；不发送输入。它不验证托盘、WTS 会话通知、物理按键或应用效果。
 
-预览包改为 Git 索引清单，不再递归收集未跟踪文件；ZIP_STORED 和固定元数据避免压缩库差异。CI 的 --check 校验重建包与已提交清单，失配不自动更新清单。所有打包测试均使用临时 Git 仓库和无敏感信息的哨兵。
+预览包改为 Git 索引清单，不再递归收集未跟踪文件；内容取自索引，发布文件存在未暂存修改时拒绝打包；ZIP_STORED 和固定元数据避免压缩库差异。CI 的 --check 校验重建包与已提交清单，失配不自动更新清单。所有打包测试均使用临时 Git 仓库和无敏感信息的哨兵。

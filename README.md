@@ -50,7 +50,7 @@ VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscod
 | tools/ | 配置校验/生成、Windows 发现/smoke、预览包构建 |
 | tests/、docs/ | 静态测试、真机清单、兼容矩阵、原规格与实现决策 |
 
-macOS/Linux 开发检查：python3 -B tools/validate-config.py、python3 -B tools/generate-config.py --check、python3 -B -m unittest discover -s tests -p 'test_*.py'。先将准备发布的文件加入 Git 索引，再运行 python3 -B tools/package-preview.py 生成 dist/MacFlow-development-preview.zip 和 dist/manifest.json；不包含 AHK 运行时。打包仅收集索引中的指定目录/文件，拒绝符号链接，未跟踪的私人文件不会进入 ZIP。打包需要 Git checkout；解压后的运行包不需要 Git。
+macOS/Linux 开发检查：python3 -B tools/validate-config.py、python3 -B tools/generate-config.py --check、python3 -B -m unittest discover -s tests -p 'test_*.py'。先将准备发布的文件加入 Git 索引，再运行 python3 -B tools/package-preview.py 生成 dist/MacFlow-development-preview.zip 和 dist/manifest.json；不包含 AHK 运行时。打包仅收集索引中的指定目录/文件，内容取自已暂存的索引版本；发布文件有未暂存修改时拒绝打包。拒绝符号链接，未跟踪的私人文件不会进入 ZIP。打包需要 Git checkout；解压后的运行包不需要 Git。
 
 python3 -B tools/package-preview.py --check 在内存中重建 ZIP 并核对已提交的 dist/manifest.json，不改写文件。Linux 与 Windows CI 都执行该检查。固定 ZIP 元数据和不压缩存储用于跨平台复现。
 

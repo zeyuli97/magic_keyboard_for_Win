@@ -78,8 +78,26 @@ class PackagingTests(unittest.TestCase):
         packager.package(self.root)
         readme = self.root / "README.md"
         readme.write_bytes(readme.read_bytes() + b"\nchanged\n")
-        with self.assertRaises(packager.PackageError):
+        self.git("add", "README.md")
+        with self.assertRaisesRegex(packager.PackageError, "manifest is missing/stale"):
             packager.package(self.root, check=True)
+
+    def test_unstaged_release_edit_is_refused_without_writing(self):
+        readme = self.root / "README.md"
+        readme.write_bytes(readme.read_bytes() + b"\nunstaged sentinel\n")
+        with self.assertRaisesRegex(packager.PackageError, "Unstaged change in release file: README.md"):
+            packager.package(self.root)
+        self.assertFalse((self.root / "dist").exists())
+
+    def test_archive_contains_staged_index_content(self):
+        readme = self.root / "README.md"
+        readme.write_bytes(readme.read_bytes() + b"\nstaged sentinel\n")
+        self.git("add", "README.md")
+        staged = self.git("show", ":README.md").stdout
+        archive, _ = packager.build_package(self.root)
+        with zipfile.ZipFile(io.BytesIO(archive)) as output:
+            self.assertEqual(staged, output.read("MacFlow/README.md"))
+        self.assertIn(b"staged sentinel", staged)
 
 
 if __name__ == "__main__":

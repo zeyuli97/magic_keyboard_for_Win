@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Package Git-indexed preview files; --check verifies the committed manifest."""
+"""Package Git-index content of preview files; --check verifies the committed manifest."""
 import argparse
 import hashlib
 import io
 import json
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import subprocess
 import sys
@@ -19,13 +20,14 @@ REQUIRED = TOP_LEVEL | frozenset((
     "build/generated/macflow.ini.sha256", "build/generated/manifest.json",
     "tools/smoke-tests.ps1", "tests/manual-checklist.md",
 ))
+OBJECT_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 
 
 class PackageError(ValueError):
     pass
 
 
-def release_paths(root):
+def _release_entries(root):
     """Read the index, never a directory walk or a network resource."""
     root = Path(root).resolve()
     try:
@@ -45,10 +47,12 @@ def release_paths(root):
             continue
         try:
             metadata, raw_name = record.split(b"\t", 1)
-            mode, _, stage = metadata.decode("ascii").split()
+            mode, object_id, stage = metadata.decode("ascii").split()
             name = raw_name.decode("utf-8")
         except (ValueError, UnicodeError) as exc:
             raise PackageError("Invalid Git inventory entry.") from exc
+        if not OBJECT_ID.fullmatch(object_id):
+            raise PackageError("Invalid Git object ID for: " + name)
         path = PurePosixPath(name)
         if path.is_absolute() or ".." in path.parts or "\\" in name:
             raise PackageError("Unsafe tracked path: " + name)
@@ -64,16 +68,58 @@ def release_paths(root):
                 raise PackageError("Symlink in release path: " + name)
         if not target.exists() or not stat.S_ISREG(target.stat().st_mode):
             raise PackageError("Tracked release file is missing/not regular: " + name)
-        selected.append(name)
-    missing = REQUIRED - set(selected)
+        selected.append((name, object_id))
+    missing = REQUIRED - {name for name, _ in selected}
     if missing:
         raise PackageError("Required release files are not indexed: " + ", ".join(sorted(missing)))
     return sorted(selected)
 
 
+def release_paths(root):
+    return [name for name, _ in _release_entries(root)]
+
+
+def _index_blobs(root, object_ids):
+    request = b"".join(object_id.encode("ascii") + b"\n" for object_id in object_ids)
+    try:
+        output = subprocess.run(["git", "-C", str(root), "cat-file", "--batch"],
+                                input=request, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise PackageError("Cannot read release file content from the Git index.") from exc
+    blobs, offset = {}, 0
+    for object_id in object_ids:
+        end = output.find(b"\n", offset)
+        header = output[offset:end].split() if end >= 0 else []
+        if len(header) != 3 or header[0] != object_id.encode("ascii") or header[1] != b"blob" or not header[2].isdigit():
+            raise PackageError("Invalid Git object for release content: " + object_id)
+        start = end + 1
+        stop = start + int(header[2])
+        if output[stop:stop + 1] != b"\n":
+            raise PackageError("Truncated Git object for release content: " + object_id)
+        blobs[object_id] = output[start:stop]
+        offset = stop + 1
+    return blobs
+
+
+def release_contents(root):
+    """Return staged blob bytes, refusing working-tree edits the index lacks.
+
+    Configuration checks read the working tree, so equality keeps the packaged
+    bytes identical to the bytes those checks validated.
+    """
+    root = Path(root).resolve()
+    entries = _release_entries(root)
+    blobs = _index_blobs(root, sorted({object_id for _, object_id in entries}))
+    contents = {}
+    for name, object_id in entries:
+        if (root / name).read_bytes() != blobs[object_id]:
+            raise PackageError("Unstaged change in release file: " + name + ". Stage or revert it before packaging.")
+        contents[name] = blobs[object_id]
+    return contents
+
+
 def build_package(root):
-    root = Path(root)
-    contents = {name: (root / name).read_bytes() for name in release_paths(root)}
+    contents = release_contents(root)
     buffer = io.BytesIO()
     # Stored data avoids platform/zlib-version-dependent compression output.
     with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_STORED) as output:

@@ -298,6 +298,15 @@ public static class MacFlowCiRestrictedRunner
     # execution-policy override, alternate account or elevation verb is involved.
     $ChildArguments = '-NoLogo -NoProfile -NonInteractive -File "' + $SmokeScript +
         '" -AutoHotkeyPath "' + $AutoHotkeyPath + '" -RegistrationTest'
+    # The raw CreateProcessAsUserW child inherits this pwsh environment, whose
+    # PSModulePath puts PowerShell 7 modules first. Windows PowerShell would then
+    # fail to autoload Microsoft.PowerShell.Management/Utility. Without the
+    # variable it rebuilds its own default path at startup:
+    # https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_psmodulepath
+    [Environment]::SetEnvironmentVariable('PSModulePath', $null, 'Process')
+    if ($null -ne [Environment]::GetEnvironmentVariable('PSModulePath', 'Process')) {
+        throw 'Could not clear the inherited PowerShell 7 module path for the Windows PowerShell child.'
+    }
     $ExitCode = [MacFlowCiRestrictedRunner]::Run($WindowsPowerShell, $ChildArguments, $ProjectRoot)
     exit $ExitCode
 }
