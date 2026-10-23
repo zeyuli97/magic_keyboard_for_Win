@@ -5,7 +5,6 @@ import unittest
 from test_config import ROOT
 BINDINGS = ROOT / "integrations/vscode/keybindings.macflow.json"
 
-@unittest.skipUnless(BINDINGS.exists(), "Profiles not integrated in this worktree")
 class BridgeTests(unittest.TestCase):
     def setUp(self):
         self.bindings = json.loads(BINDINGS.read_text())

@@ -24,6 +24,41 @@ ACTIONS = frozenset((
     "browser_forward", "explorer_new", "explorer_delete", "terminal_copy",
     "terminal_paste",
 ))
+BLOCKED_ACTIONS = frozenset((
+    "browser_address", "explorer_delete", "terminal_copy", "terminal_paste",
+))
+PROTECTED_CHORDS = frozenset(("LWin+l", "LWin+Backspace"))
+ALLOWED_HKLS = ("04090409",)
+# These are implemented capabilities, not all syntactically recognized actions.
+# Keep each profile explicit; changing a context must not silently extend a
+# handler's capability (for example, Explorer cannot handle undo or find).
+PROFILE_ACTIONS = {
+    "chrome": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous", "browser_new", "browser_close",
+        "browser_reload", "browser_restore", "browser_back", "browser_forward",
+    )),
+    "notepad": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "vscode": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "explorer": frozenset((
+        "copy", "paste", "cut", "select_all", "explorer_new",
+        "app_next", "app_previous",
+    )),
+    "windows_terminal": frozenset(),
+}
+
 PROFILE_CONTRACTS = {
     "chrome": ("chrome.exe", {"edit", "text", "browser"}),
     "notepad": ("notepad.exe", {"edit", "text"}),
@@ -141,11 +176,11 @@ def validate_bundle(bundle):
         if rule["on_unmatched"] != "passthrough":
             _fail(path + ".on_unmatched", "must be passthrough")
         _str(rule["blocked_reason"], path + ".blocked_reason", nonempty=False)
-        if rule["enabled"] and rule["physical_chord"] in ("LWin+l", "LWin+Backspace"):
+        if rule["enabled"] and rule["physical_chord"] in PROTECTED_CHORDS:
             _fail(path, "reserved or unsafe chords cannot be enabled under another action")
         if rule["enabled"] and rule["blocked_reason"].strip():
             _fail(path, "blocked rules must be disabled")
-        if rule["enabled"] and rule["action"] in ("browser_address", "explorer_delete", "terminal_copy", "terminal_paste"):
+        if rule["enabled"] and rule["action"] in BLOCKED_ACTIONS:
             _fail(path, "this action is blocked in the initial backend")
         if "terminal" in contexts and rule["action"] not in ("terminal_copy", "terminal_paste"):
             _fail(path, "terminal context cannot fall back to generic actions")
@@ -158,7 +193,7 @@ def validate_bundle(bundle):
             chord_contexts.add(key)
 
     layouts = _strings(apps["allowed_hkls"], "apps.allowed_hkls", nonempty=True)
-    if layouts != ["04090409"]:
+    if tuple(layouts) != ALLOWED_HKLS:
         _fail("apps.allowed_hkls", "initial backend permits only exact HKL 04090409")
     bypass = set(_strings(apps["bypass_processes"], "apps.bypass_processes", pattern=PROCESS))
     profiles = _list(apps["profiles"], "apps.profiles", nonempty=True)
@@ -189,6 +224,8 @@ def validate_bundle(bundle):
         matches = {}
         for rule in rules:
             if rule["enabled"] and contexts.intersection(rule["contexts"]):
+                if rule["action"] not in PROFILE_ACTIONS[profile["id"]]:
+                    _fail(path, f"profile {profile['id']} does not implement action {rule['action']} (rule {rule['id']})")
                 key = (rule["physical_chord"], rule["priority"])
                 if key in matches:
                     _fail(path, f"rules {matches[key]} and {rule['id']} overlap at equal priority")

@@ -13,7 +13,6 @@ class TraceabilityTests(unittest.TestCase):
             self.assertEqual(CASE_PRIORITIES[row["id"]], row["priority"])
             self.assertTrue(row["acceptance"])
 
-    @unittest.skipUnless((ROOT / "config/mappings.yaml").exists(), "Profiles not integrated")
     def test_each_actual_rule_has_a_manual_case(self):
         rows = json.loads((ROOT / "tests/mapping-spec.yaml").read_text())["cases"]
         covered = {rule for row in rows for rule in row["rules"]}

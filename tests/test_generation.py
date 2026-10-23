@@ -1,4 +1,4 @@
-"""Artifact integration tests; import the Lead-owned generator when integrated."""
+"""Artifact integration tests; missing required sources fail discovery."""
 import hashlib
 import importlib.util
 import json
@@ -11,15 +11,11 @@ from test_config import ROOT, fixture, make_root
 from macflow_config import ConfigError
 
 GENERATOR = ROOT / "tools" / "generate-config.py"
-if GENERATOR.exists():
-    spec = importlib.util.spec_from_file_location("macflow_generator_tested", GENERATOR)
-    generator = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(generator)
-else:
-    generator = None
+spec = importlib.util.spec_from_file_location("macflow_generator_tested", GENERATOR)
+generator = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(generator)
 
 
-@unittest.skipIf(generator is None, "Lead generator not integrated in this worktree")
 class ArtifactGenerationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="macflow-generation-test-")
