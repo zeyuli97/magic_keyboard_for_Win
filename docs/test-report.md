@@ -21,11 +21,11 @@
 
 原型/v1.0 均未通过。Windows 检查入口：
 
-CI 模块路径回归可在 Windows 的 PowerShell 7.5+ 中单独执行 `pwsh -NoProfile -File .\tests\test-ci-module-path.ps1`。它实际调用启动器共用的清理脚本，覆盖非空、空字符串和缺失的 PSModulePath，并以原始 .NET 子进程启动 Windows PowerShell 检查核心模块自动加载；不启动 AHK，也不代表降权 smoke 或硬件通过。
-
 ~~~powershell
 powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe' -SelfTest
 ~~~
+
+CI 模块路径回归可在 Windows 的 PowerShell 7.5+ 中单独执行 `pwsh -NoProfile -File .\tests\test-ci-module-path.ps1`。它实际调用启动器共用的清理脚本，覆盖非空、空字符串和缺失的 PSModulePath，并以原始 .NET 子进程启动 Windows PowerShell 检查核心模块自动加载；不启动 AHK，也不代表降权 smoke 或硬件通过。
 
 工具只用已安装运行时，不下载安装、提权或启用映射；超时只停止本次启动的子进程。语法/初始化通过仍保持硬件 NOT TESTED。
 
