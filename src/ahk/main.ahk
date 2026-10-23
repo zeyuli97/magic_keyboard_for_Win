@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2.0.19+
 #SingleInstance Off
+#NoTrayIcon
 #Warn
 
 ; DEVELOPMENT PREVIEW. No AHK/Windows/hardware success is claimed by this file.
@@ -34,39 +35,56 @@ MF_Main() {
     SendLevel(0)
     SetWorkingDir(MF.Root)
     selfTest := false
+    registrationTest := false
+    if A_Args.Length > 1 {
+        MF_WriteStdout("Use only one mode: --self-test, --registration-test or --help.`n")
+        ExitApp(2)
+    }
     for argument in A_Args {
         if argument = "--help" {
             MF_WriteStdout("MacFlow DEVELOPMENT PREVIEW`n"
-                . "Usage: AutoHotkey64.exe src\ahk\main.ahk [--self-test|--help]`n"
+                . "Usage: AutoHotkey64.exe src\ahk\main.ahk [--self-test|--registration-test|--help]`n"
                 . "Normal launch starts in Native Mode. Enable from the tray only.`n"
-                . "--self-test loads config and exits Native; no mappings/hooks are installed.`n")
+                . "--self-test loads config and exits Native; no mappings/hooks are installed.`n"
+                . "--registration-test registers Native hotkey paths, cleans up and exits; no input is sent.`n"
+                . "The test modes are mutually exclusive and require a non-elevated 64-bit runtime.`n")
             ExitApp(0)
         }
         if argument = "--self-test"
             selfTest := true
+        else if argument = "--registration-test"
+            registrationTest := true
         else {
             MF_WriteStdout("Unknown argument. Use --help.`n")
             ExitApp(2)
         }
     }
+    testRun := selfTest || registrationTest
+    ; The directive avoids even a transient tray icon in command-line checks.
+    ; Restore the unchanged normal-launch tray before any interactive error UI.
+    if !testRun
+        A_IconHidden := false
     if A_IsAdmin || A_PtrSize != 8 {
         message := "MacFlow requires a non-elevated 64-bit AutoHotkey v2 process. No mappings were enabled."
         MF_WriteStdout(message "`n")
-        if !selfTest
+        if !testRun
             MsgBox(message, "MacFlow - start refused", "Iconx")
         ExitApp(2)
     }
     try MF.Config := MF_LoadConfig(MF.Root)
     catch Error as err
         MF.ConfigError := err.Message
+    if testRun && MF.ConfigError != "" {
+        label := registrationTest ? "REGISTRATION-TEST" : "SELF-TEST"
+        MF_WriteStdout(label " FAIL: " MF.ConfigError "`n")
+        ExitApp(1)
+    }
     if selfTest {
-        if MF.ConfigError != "" {
-            MF_WriteStdout("SELF-TEST FAIL: " MF.ConfigError "`n")
-            ExitApp(1)
-        }
         MF_WriteStdout("SELF-TEST PASS: configuration loaded; Native Mode; no mappings/hooks installed. Hardware NOT TESTED.`n")
         ExitApp(0)
     }
+    if registrationTest
+        ExitApp(MF_RunRegistrationTest())
     OnExit(MF_OnExit)
     MF.MutexHandle := DllCall("Kernel32\CreateMutexW", "Ptr", 0, "Int", false,
         "Str", "Local\MacFlow-AHK-Development-Preview", "Ptr")
@@ -88,9 +106,7 @@ MF_Main() {
             "Ptr", A_ScriptHwnd, "UInt", 0, "Int") != 0
         if !MF.SessionRegistered
             throw Error("Session notification registration failed. Restart MacFlow after Windows sign-in completes.")
-        if MF.ConfigError = ""
-            MF_RegisterMappings()
-        MF_RegisterEmergency()
+        MF_RegisterInputPaths()
         SetTimer(MF_LifecyclePoll, 30)
     } catch Error as err {
         MF.ConfigError := "Initialization failed: " err.Message
@@ -99,6 +115,51 @@ MF_Main() {
     MF_UpdateTray()
     if MF.ConfigError != ""
         TrayTip("Native Mode: " MF.ConfigError, "MacFlow configuration / startup error", 3)
+}
+
+; Normal startup and the registration test use this exact registration path.
+; The caller installs the keyboard hook; neither this helper nor registration
+; itself enables routing or sends input.
+MF_RegisterInputPaths() {
+    global MF
+    if MF.ConfigError = ""
+        MF_RegisterMappings()
+    MF_RegisterEmergency()
+}
+
+MF_RunRegistrationTest() {
+    global MF
+    ; No tray, timer, session subscription, mutex or ordinary OnExit callback.
+    ; Native predicates keep both mappings and emergency callbacks inactive.
+    MF.Enabled := false
+    MF.VscodeReady := false
+    failure := ""
+    try {
+        InstallKeybdHook()
+        MF_RegisterInputPaths()
+        if MF.Enabled || MF.VscodeReady || MF.SwitcherActive || MF.OwnedKeys.Count
+            throw Error("Registration changed the Native input state.")
+    } catch Error as err {
+        failure := err.Message
+    } finally {
+        MF.Enabled := false
+        MF.VscodeReady := false
+        ; Disable every registered hotkey, reset the HotIf creation context and
+        ; remove the hook. Do not call input-reset or action/send functions.
+        try {
+            Suspend(true)
+            HotIf()
+            InstallKeybdHook(false, true)
+        } catch Error as err {
+            failure .= (failure = "" ? "" : "; ") "Registration cleanup failed: " err.Message
+        }
+    }
+    if failure != "" {
+        MF_WriteStdout("REGISTRATION-TEST FAIL: " failure "`n")
+        return 1
+    }
+    MF_WriteStdout("REGISTRATION-TEST PASS: Native hotkey/emergency registration and cleanup completed; no input sent. Hardware NOT TESTED.`n")
+    return 0
 }
 
 MF_BuildTray() {

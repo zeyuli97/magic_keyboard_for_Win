@@ -33,6 +33,18 @@ AHK 路径是示例，以实际安装位置为准。启动后显示 Native Mode�
 & 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe' /ErrorStdOut '.\src\ahk\main.ahk' --self-test
 ```
 
-该检查只加载配置并确认初始 Native 状态，然后退出，不安装输入 hook、不注册映射，也不改变已经运行的实例。成功不代表 hook、托盘、焦点判断、输出按键或硬件行为通过。完整 Windows 语法及 smoke 检查见 `tools/smoke-tests.ps1`，真实验收见 `docs/compatibility-matrix.md` 和 `docs/test-report.md`。
+`--self-test` 只加载配置并确认初始 Native 状态，然后退出，不安装输入 hook、不注册映射，也不改变已经运行的实例。它成功不代表热键注册成功。
+
+另外提供 **Native 注册自检**，验证正常启动使用的同一组 HotIf/Hotkey/应急键注册调用：
+
+```powershell
+.\tools\smoke-tests.ps1 -AutoHotkeyPath 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe' -RegistrationTest
+```
+
+脚本先执行 AHK `/validate`，通过后再启动 `--registration-test`。注册期间 `Enabled=false`、`VscodeReady=false`，所有映射与应急处理条件不成立；不启用映射、不派发动作、不发送按键。该进程隐藏托盘，不建立常驻定时器、会话通知或正常运行互斥锁，不等待输入；完成后停用注册热键、卸载 hook 并立即退出。注册或清理异常返回非零退出码。
+
+`-SelfTest` 和 `-RegistrationTest` 不能同时使用，AHK 的 `--self-test` 与 `--registration-test` 也互斥。每个有效 smoke 模式都先做 `/validate`；可选自检的每个 AHK 子进程限制 15 秒，超时只结束本次检查启动的子进程并报错。两个自检都要求非管理员 64-bit AHK，没有 CI 提权豁免。单独执行 `--registration-test` 时也遵守相同限制，建议使用 smoke 包装器获得超时和诊断捕获。
+
+本次开发环境未运行 Windows 自检。即使以后 `/validate`、配置初始化或注册自检通过，也不能证明物理按键、焦点路由、托盘操作、合成输入、中文输入法或 Magic Keyboard 硬件行为正确；这些仍按 `docs/compatibility-matrix.md` 和 `docs/test-report.md` 分别验收。
 
 真机记录至少填写 Windows build、AHK 精确版本/路径、应用版本、键盘型号/ANSI-ISO-JIS、USB 或蓝牙、前台 HKL、普通/高权限环境、提交与配置 hash。不要收集窗口标题、输入文本、密码、剪贴板内容。原型没有设备身份或注入来源保证；来源未知是保留限制，不是假定物理输入。

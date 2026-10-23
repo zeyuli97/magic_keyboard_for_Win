@@ -1,9 +1,14 @@
 [CmdletBinding()]
 param(
     [string] $AutoHotkeyPath,
-    [switch] $SelfTest
+    [switch] $SelfTest,
+    [switch] $RegistrationTest
 )
 $ErrorActionPreference = "Stop"
+if ($SelfTest -and $RegistrationTest) {
+    [Console]::Error.WriteLine("Choose only one optional check: -SelfTest or -RegistrationTest.")
+    exit 2
+}
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $MainScript = Join-Path $ProjectRoot "src\ahk\main.ahk"
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
@@ -25,10 +30,6 @@ if (-not $AutoHotkeyPath -or -not (Test-Path -LiteralPath $AutoHotkeyPath -PathT
 $AutoHotkeyPath = (Resolve-Path -LiteralPath $AutoHotkeyPath).Path
 if (-not (Test-Path -LiteralPath $MainScript -PathType Leaf)) {
     [Console]::Error.WriteLine("Missing main.ahk.")
-    exit 1
-}
-if ($SelfTest -and -not (Test-Path -LiteralPath (Join-Path $ProjectRoot "build\generated\macflow.ini"))) {
-    [Console]::Error.WriteLine("Missing generated configuration. Run Python config validation/generation first.")
     exit 1
 }
 
@@ -98,10 +99,18 @@ function Invoke-AhkCheck([string[]] $RuntimeArgs, [string] $Label) {
 
 try {
     Invoke-AhkCheck -RuntimeArgs @("/validate", ('"' + $MainScript + '"')) -Label "AHK syntax validation"
+    if (($SelfTest -or $RegistrationTest) -and -not (Test-Path -LiteralPath (Join-Path $ProjectRoot "build\generated\macflow.ini"))) {
+        throw "Missing generated configuration. Run Python config validation/generation first."
+    }
     if ($SelfTest) {
         # This application-defined argument loads configuration in Native Mode
         # and exits before hooks or mappings are installed.
         Invoke-AhkCheck -RuntimeArgs @(('"' + $MainScript + '"'), "--self-test") -Label "AHK Native Mode initialization"
+    }
+    if ($RegistrationTest) {
+        # Registration follows the normal HotIf/Hotkey/emergency paths while
+        # Native remains enforced. This does not test physical input or send keys.
+        Invoke-AhkCheck -RuntimeArgs @(('"' + $MainScript + '"'), "--registration-test") -Label "AHK Native Mode hotkey registration"
     }
     Write-Output "No mapping was enabled; hardware results remain NOT TESTED."
     exit 0
