@@ -32,6 +32,9 @@ jobs:
       - run: python tools/generate-config.py --check
       - run: python -m unittest discover -s tests -p 'test_*.py'
       - run: python tools/package-preview.py --check
+      - name: Test module-path removal and Windows PowerShell autoload
+        shell: pwsh
+        run: ./tests/test-ci-module-path.ps1
       - name: Download pinned AHK and verify both SHA256 hashes
         id: ahk
         shell: pwsh

@@ -303,10 +303,7 @@ public static class MacFlowCiRestrictedRunner
     # fail to autoload Microsoft.PowerShell.Management/Utility. Without the
     # variable it rebuilds its own default path at startup:
     # https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_psmodulepath
-    [Environment]::SetEnvironmentVariable('PSModulePath', $null, 'Process')
-    if ($null -ne [Environment]::GetEnvironmentVariable('PSModulePath', 'Process')) {
-        throw 'Could not clear the inherited PowerShell 7 module path for the Windows PowerShell child.'
-    }
+    . (Join-Path $PSScriptRoot 'ci-clear-module-path.ps1')
     $ExitCode = [MacFlowCiRestrictedRunner]::Run($WindowsPowerShell, $ChildArguments, $ProjectRoot)
     exit $ExitCode
 }

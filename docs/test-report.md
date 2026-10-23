@@ -6,12 +6,13 @@
 
 生成器测试覆盖确定性、UTF-16 中文 round-trip、SHA256、缺失/篡改/陈旧文件及不写入的 --check。VS Code 数据检查覆盖触发键对应、noop、选区条件与跳过 shell 设置，不证明真实应用行为。
 
-已在当前项目主分支整合目录执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：**74 项通过，0 项跳过**。新增 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查、Git 索引打包（含拒绝未暂存修改）测试，以及 CI 降权启动前清除 PSModulePath 的源码检查。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；这不是 AHK 或硬件结果。Windows 结果需另记实际测试 commit 与配置 hash。
+已执行 python3 -B -m unittest discover -s tests -p 'test_*.py'：**76 项通过，0 项跳过**。覆盖 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查、Git 索引打包（含拒绝未暂存修改），以及 CI 共用清理脚本和行为测试接入的源码检查。新增 PowerShell 行为脚本不计入这 76 项，本机尚未执行。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；这不是 AHK 或硬件结果。Windows 结果需另记实际测试 commit 与配置 hash。
 
 | 项目 | 状态 | 原因 |
 | --- | --- | --- |
 | AHK /validate、--self-test、--registration-test | NOT TESTED | 没有 Windows AHK 运行环境 |
 | Windows CI 与 SAFER 降权启动器 | NOT TESTED | 已配置；本轮未推送/运行 Windows job |
+| PowerShell 7.5+ 模块路径回归 | NOT TESTED | 已加入 Windows CI；本机没有 PowerShell，尚未执行行为脚本 |
 | 全部真机用例 | NOT TESTED | 无 Windows + Magic Keyboard 操作者/证据 |
 | T03 实现 | BLOCKED | Windows Terminal 选区/no-op 适配不可用 |
 | T01b 的 ⌘L | BLOCKED | 保留键冲突未解决 |
@@ -19,6 +20,8 @@
 | T07c | 不适用 | 单进程 ahk-only；不是 PASS |
 
 原型/v1.0 均未通过。Windows 检查入口：
+
+CI 模块路径回归可在 Windows 的 PowerShell 7.5+ 中单独执行 `pwsh -NoProfile -File .\tests\test-ci-module-path.ps1`。它实际调用启动器共用的清理脚本，覆盖非空、空字符串和缺失的 PSModulePath，并以原始 .NET 子进程启动 Windows PowerShell 检查核心模块自动加载；不启动 AHK，也不代表降权 smoke 或硬件通过。
 
 ~~~powershell
 powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe' -SelfTest
