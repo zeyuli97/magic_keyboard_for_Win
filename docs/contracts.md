@@ -44,7 +44,7 @@ Native Mode clears Enabled and releases only owned synthetic keys. Do not blindl
 
 ## Verification
 
-Static tests verify config semantics, deterministic generation, invalid configuration fail-closed policy and release gate logic. They do not parse or run AHK. Windows smoke script runs AHK `/validate` and optional `--self-test` (init Native then exit, no mappings enabled), when a user supplies an installed runtime. Genuine keyboard test statuses remain NOT TESTED even after syntax/smoke pass.
+Static tests verify config semantics, deterministic generation, invalid configuration fail-closed policy and release gate logic. They inspect a restricted subset of AHK policy literals, not the complete AHK language, and do not execute AHK. Windows smoke runs `/validate`, then optionally configuration-only `--self-test` or Native-only `--registration-test`, when supplied an installed runtime. Genuine keyboard test statuses remain NOT TESTED even after syntax/smoke pass.
 
 ## Engineering review amendment (2026-10-22)
 

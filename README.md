@@ -24,10 +24,11 @@ py -3 -m unittest discover -s tests -p "test_*.py"
 ~~~powershell
 $ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
 powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath $ahk -SelfTest
+powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath $ahk -RegistrationTest
 & $ahk .\src\ahk\main.ahk
 ~~~
 
-根据实际位置修改 $ahk；任一检查失败先停止。无需管理员权限或执行策略绕过。smoke 只检验语法/Native 初始化，**不替代按键验收**。
+根据实际位置修改 $ahk；任一检查失败先停止。无需管理员权限或执行策略绕过。-SelfTest 检查配置加载；-RegistrationTest 在 Native 状态注册并清理实际热键路径，不发送输入。两种模式分开调用，都会先检查语法，**不替代按键验收**。
 
 首次启动为 **Native Mode**。鼠标查看托盘 **Status...**，释放全部修饰键后选择 **Enable mappings**。配置错误时不应启用。白名单不识别浏览器内部游戏、远程网页或密码输入场景；不确定时手动 Native。
 
@@ -49,7 +50,11 @@ VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscod
 | tools/ | 配置校验/生成、Windows 发现/smoke、预览包构建 |
 | tests/、docs/ | 静态测试、真机清单、兼容矩阵、原规格与实现决策 |
 
-macOS/Linux 开发检查：python3 -B tools/validate-config.py、python3 -B tools/generate-config.py --check、python3 -B -m unittest discover -s tests -p 'test_*.py'。运行 python3 -B tools/package-preview.py 生成 dist/MacFlow-development-preview.zip；不包含 AHK 运行时。
+macOS/Linux 开发检查：python3 -B tools/validate-config.py、python3 -B tools/generate-config.py --check、python3 -B -m unittest discover -s tests -p 'test_*.py'。先将准备发布的文件加入 Git 索引，再运行 python3 -B tools/package-preview.py 生成 dist/MacFlow-development-preview.zip 和 dist/manifest.json；不包含 AHK 运行时。打包仅收集索引中的指定目录/文件，拒绝符号链接，未跟踪的私人文件不会进入 ZIP。打包需要 Git checkout；解压后的运行包不需要 Git。
+
+python3 -B tools/package-preview.py --check 在内存中重建 ZIP 并核对已提交的 dist/manifest.json，不改写文件。Linux 与 Windows CI 都执行该检查。固定 ZIP 元数据和不压缩存储用于跨平台复现。
+
+Windows CI 另外下载固定 AHK 2.0.19，验证压缩包与 exe 的 SHA256，再通过 CI 专用降权启动器执行语法和 Native 注册检查。AHK 的管理员拒绝条件不变；降权失败就令 CI 失败。该下载仅属于 CI 测试准备，MacFlow 本身不会联网。CI 流程已配置但本次尚未在 Windows 执行；即使 CI 通过，也不能提升真机验收状态。
 
 config/*.yaml 是严格 JSON 子集，修改后重新校验生成；不要手改 build/generated/。SHA256 仅检查损坏/陈旧，不是安全签名。
 

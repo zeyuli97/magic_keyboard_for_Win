@@ -21,7 +21,7 @@ MF_LoadConfig(root) {
         throw Error("Invalid source hash.")
     config.AllowedLayouts := MF_IniList(path, "meta", "allowed_hkls")
     for layout in config.AllowedLayouts
-        if layout != "04090409"
+        if !MF_Contains(MF_ConfigAllowedLayouts(), layout)
             throw Error("Only the US English layout is enabled in this preview.")
     config.BypassProcesses := MF_IniList(path, "meta", "bypass_processes")
     for process in config.BypassProcesses
@@ -29,7 +29,7 @@ MF_LoadConfig(root) {
             throw Error("Invalid bypass process.")
     ruleCount := MF_IniInteger(path, "meta", "rule_count", 1, 256)
     profileCount := MF_IniInteger(path, "meta", "profile_count", 1, 16)
-    actions := StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_address|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward|explorer_new|explorer_delete|terminal_copy|terminal_paste", "|")
+    actions := MF_ConfigActions()
     ids := Map()
     Loop ruleCount {
         section := "rule." A_Index
@@ -45,27 +45,26 @@ MF_LoadConfig(root) {
         if !MF_Contains(actions, rule.Action)
             throw Error("Unknown action: " rule.Id)
         MF_ValidateContexts(rule.Contexts)
-        if rule.Enabled && (rule.BlockedReason != "" || MF_Contains(["browser_address", "explorer_delete", "terminal_copy", "terminal_paste"], rule.Action))
+        if rule.Enabled && (rule.BlockedReason != "" || MF_Contains(MF_ConfigBlockedActions(), rule.Action))
             throw Error("Blocked mapping must remain disabled: " rule.Id)
         ; Never register the protected chord under another action name.
-        if rule.Enabled && (rule.Chord = "LWin+l" || rule.Chord = "LWin+Backspace")
+        if rule.Enabled && MF_Contains(MF_ConfigProtectedChords(), rule.Chord)
             throw Error("Protected/deletion chord is unavailable in this backend.")
+        if MF_Contains(rule.Contexts, "terminal") && !MF_Contains(["terminal_copy", "terminal_paste"], rule.Action)
+            throw Error("Terminal context cannot fall back to generic actions.")
+        if SubStr(rule.Action, 1, 9) = "terminal_" && (rule.Contexts.Length != 1 || rule.Contexts[1] != "terminal")
+            throw Error("Terminal actions require only terminal context.")
         config.Rules.Push(rule)
     }
     processes := Map()
     profileIds := Map()
-    profilePolicy := Map(
-        "chrome", {Process: "chrome.exe", Contexts: ["edit", "text", "browser"]},
-        "notepad", {Process: "notepad.exe", Contexts: ["edit", "text"]},
-        "vscode", {Process: "code.exe", Contexts: ["vscode"]},
-        "explorer", {Process: "explorer.exe", Contexts: ["explorer"]},
-        "windows_terminal", {Process: "windowsterminal.exe", Contexts: ["terminal"]})
+    profilePolicy := MF_ConfigProfilePolicy()
     Loop profileCount {
         section := "profile." A_Index
         profile := {Id: MF_Ini(path, section, "id"), Processes: MF_IniList(path, section, "processes"),
             Contexts: MF_IniList(path, section, "contexts"), Enabled: MF_IniBool(path, section, "enabled"),
             RequiresIntegration: MF_IniBool(path, section, "requires_integration")}
-        if !MF_Contains(["chrome", "notepad", "vscode", "explorer", "windows_terminal"], profile.Id) || profileIds.Has(profile.Id)
+        if !profilePolicy.Has(profile.Id) || profileIds.Has(profile.Id)
             throw Error("Invalid/duplicate profile.")
         profileIds[profile.Id] := true
         MF_ValidateContexts(profile.Contexts)
@@ -88,11 +87,14 @@ MF_LoadConfig(root) {
         }
         config.Profiles.Push(profile)
     }
+    profileActions := MF_ProfileActionPolicy()
     for profile in config.Profiles {
         matching := Map()
         for rule in config.Rules {
             if !rule.Enabled || !MF_Intersects(rule.Contexts, profile.Contexts)
                 continue
+            if !MF_Contains(profileActions[profile.Id], rule.Action)
+                throw Error("No implemented handler for " profile.Id ": " rule.Action " (" rule.Id ")")
             key := rule.Chord "|" rule.Priority
             if matching.Has(key)
                 throw Error("Ambiguous mapping for " profile.Id ": " rule.Chord)
@@ -136,8 +138,48 @@ MF_IniBool(path, section, key) {
 
 MF_ValidateContexts(contexts) {
     for context in contexts
-        if !MF_Contains(["edit", "text", "browser", "explorer", "vscode", "terminal"], context)
+        if !MF_Contains(MF_ConfigContexts(), context)
             throw Error("Unknown application context.")
+}
+
+; Literal policy accessors are cross-checked against the Python validator and
+; actual handler coverage. They are project source, never loaded from user data.
+MF_ConfigActions() {
+    return StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_address|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward|explorer_new|explorer_delete|terminal_copy|terminal_paste", "|")
+}
+
+MF_ConfigContexts() {
+    return StrSplit("edit|text|browser|explorer|vscode|terminal", "|")
+}
+
+MF_ConfigBlockedActions() {
+    return StrSplit("browser_address|explorer_delete|terminal_copy|terminal_paste", "|")
+}
+
+MF_ConfigProtectedChords() {
+    return StrSplit("LWin+l|LWin+Backspace", "|")
+}
+
+MF_ConfigAllowedLayouts() {
+    return StrSplit("04090409", "|")
+}
+
+MF_ConfigProfilePolicy() {
+    return Map(
+        "chrome", {Process: "chrome.exe", Contexts: StrSplit("edit|text|browser", "|")},
+        "notepad", {Process: "notepad.exe", Contexts: StrSplit("edit|text", "|")},
+        "vscode", {Process: "code.exe", Contexts: StrSplit("vscode", "|")},
+        "explorer", {Process: "explorer.exe", Contexts: StrSplit("explorer", "|")},
+        "windows_terminal", {Process: "windowsterminal.exe", Contexts: StrSplit("terminal", "|")})
+}
+
+MF_ProfileActionPolicy() {
+    return Map(
+        "chrome", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward", "|"),
+        "notepad", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "vscode", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "explorer", StrSplit("copy|paste|cut|select_all|explorer_new|app_next|app_previous", "|"),
+        "windows_terminal", [])
 }
 
 MF_Contains(values, needle) {

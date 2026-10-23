@@ -8,3 +8,5 @@
 6. BLOCKED — Resolve Windows Terminal selection/no-selection copy (prototype P0), Command+L and recycle-bin-only Explorer deletion (v1 P1) before claiming the corresponding gates.
 
 No drivers, elevated runtime, autorun or Kanata experiment is part of this iteration.
+
+Review follow-up: application/action validation and Python/AHK parity tightened; integration-era skips removed; Native registration self-check implemented; Git-indexed reproducible packaging and a separate pinned Windows CI job added. Scope/IME/passthrough policy and all release gates remain unchanged. Windows CI execution and hardware tests are still pending.
