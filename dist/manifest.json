@@ -6,7 +6,8 @@
     ".github/workflows/static-checks.yml": "f10c5e78f74e82c3a7e61619197c63d36a653a6739c33216d1dc5fa15d01da50",
     "AGENTS.md": "eb5b1192cb18868a451f412f2ab0bdaa3e2c3f617ca9e3a394ce4ab95a6f9fcb",
     "PLAN.md": "bb0055447af55053b63ca1fac22ba827932d6f61ca8050549253f91dddf8c0b7",
-    "README.md": "bda92914d73aeb6f83f5ed878ff87abc421afd15ee735075f250ed5f9e902303",
+    "README.en.md": "09817cd020fc865942d6f42366a1fdbf73d977a1a75526ade8827c5760a79415",
+    "README.md": "78fe0838ee6183d0821d8a7e6333005cd97652a35d95c89096dbc9b7b12af85c",
     "build/generated/macflow.ini": "f162ff7cd1669af96536c49428c8be85919a4810ad5a24a4f2eba0aa294d79bb",
     "build/generated/macflow.ini.sha256": "d9c7dbc8bce21fe6b3b33ad0cec27b846c87628aa393e6a37af894b3f6b119fa",
     "build/generated/manifest.json": "f978cdb686799c9978a1dc435f2c663be8e0fcc23f4d0bedab19551fefa4155e",
@@ -60,13 +61,13 @@
     "tools/generate-config.py": "3f0d95244309c6a4d5f917d988e3c31ff79fdb2a362d1a7cee6e1b19d85d8e64",
     "tools/inspect-keys.ps1": "d2e02b2b2bcd4af22841e4c03f73b084783a5ea0b0bd2f42eb7622c3159a4a25",
     "tools/macflow_config.py": "984f1bc6b981fefb5ae6952a8f8240cda776d316746148dedef13da9ceef8a04",
-    "tools/package-preview.py": "6707ad5ae39f50419013b50a9c22e2e4f6b4c6d0a398c75ef9aaa9c3f013b842",
+    "tools/package-preview.py": "94facdd887b850a740aba78a1badd99fb0d32b0199db3ee5405215dcc2945afb",
     "tools/prepare-ci-ahk.ps1": "e78e2dbf000da2d04de955a9baa7264fbc18ea8e3161af61c7f1b74dbd592b7a",
     "tools/smoke-tests.ps1": "4c726f83ff44cf5b88bc53e7b4bf0a40c4f842f691e090989ac1bf73e03c0edc",
     "tools/validate-config.py": "af95d34a788286bfe2ad2d7248efde0f8fd2984a2749979d998868eeb19eb66c"
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "fc901ac15e61e6a21914bcad5598997320056e28169bf0c9b065ddf837711a13",
+  "sha256": "280801646ad6c80220c5bee5e29df2917c1778396f20de1e7e436266181d0b78",
   "storage": "ZIP_STORED"
 }

@@ -12,7 +12,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP_LEVEL = frozenset(("README.md", "AGENTS.md", "PLAN.md"))
+TOP_LEVEL = frozenset(("README.md", "README.en.md", "AGENTS.md", "PLAN.md"))
 # Explicit files outside the release directories. The shipped test suite checks
 # this CI wiring, so the archive carries it and the suite runs from the archive.
 EXTRA_FILES = frozenset((".github/workflows/static-checks.yml",))
