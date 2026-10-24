@@ -204,3 +204,28 @@ Codex 的审查（根目录 `CODEX-REVIEW-f291682.md`）指出两处问题。两
 复跑（最终代码）：AHK `/validate`、`--self-test`、`--registration-test` 均 PASS，无警告。schema 增加了规则数上限，release.yaml 中 T07 的说明补了“user report”，所以配置哈希变了：INI SHA256 为 `2d770b65c0c098b0023b8ac34762f44695b4313cc17694923c21688f83cbfbd1`，source hash（托盘 Status 的 Config hash）为 `03ad743946957368108db09e01b34999657c1ec34d98317da12eb7f9b2607284`。
 
 检查完成后，按用户要求提交并集成到项目根目录，作为开发预览版交给 Codex 做真机验收。这一步没有新增任何硬件结果，所有用例仍为 NOT TESTED 或 BLOCKED。
+
+## 2026-10-23 加入 Claude、Codex、Visual Studio、Unreal Editor，并在本机安装 VS Code 桥接（候选，硬件 NOT TESTED）
+
+用户报告：Notepad 和 Chrome 里映射可用，Claude、Codex、VS Code 里都不生效。原因来自代码和进程查询（只看进程名、窗口类和权限，不记录输入）：
+
+- Claude（claude.exe）和 Codex（进程名 ChatGPT.exe）不在应用白名单，路由判定为 “process … is not allowlisted”，整窗透传。
+- VS Code 需要按键桥和每次运行的托盘确认；本机的 keybindings.json 里没有任何专用触发键，判定为 “VS Code setup not confirmed for this run”。
+- 三者都是按设计透传，不是代码缺陷；四个进程都不是管理员权限。
+
+**VS Code 桥接（用户同意后安装在本机）：**
+- 先在原文件旁备份：`%APPDATA%\Code\User\keybindings.json.before-macflow-20261023-215456.bak` 和 `settings.json.before-macflow-20261023-215456.bak`。
+- keybindings.json 保留用户原有的 1 条绑定，在其后追加 37 条桥接绑定，前后用注释标出。
+- settings.json 新增 `terminal.integrated.sendKeybindingsToShell: false` 和 `terminal.integrated.commandsToSkipShell: [noop, copySelection, paste]`。两项原本都没有设置；这个列表只在默认列表上追加。
+- 冲突检查：用户绑定、本机 28 个扩展和 WSL 里 11 个扩展都没有用到这些专用组合。所有工作区都用默认 profile，“Agents” profile 共用它的快捷键和设置。
+- 每次启动 MacFlow 仍需在托盘确认。编辑器、终端四象限都未实测。
+
+**新增应用（决策 14）：**Claude、Codex、Visual Studio、Unreal Editor 与 Notepad 相同（edit/text），加入 T01、T02、T07d 的覆盖范围。已知限制：自带终端面板收到同样的 Ctrl 输出；Unreal 视口的 Home/End 是视口命令。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| unittest（worktree） | 108 项通过，0 跳过 | 新增：四个应用的进程、上下文和动作与 Notepad 一致，且不能加 browser/terminal/vscode 上下文；`direct` 名单与各应用支持集一致 |
+| validate-config、generate-config --check | VALID；3 个生成物一致 | 两个门槛仍为 NOT ACCEPTED，没有因新应用多出 UNCOVERED/UNVERIFIED |
+| AHK `/validate`、`--self-test`、`--registration-test`（worktree） | 语法通过；两个自检 PASS，无警告 | 运行时按自己的策略加载了新 profile；没有发送输入 |
+
+按用户要求，本节改动已提交并集成到根目录，替换 Codex 正在验收的 `d056b91`；验收从 preflight 重新开始。运行中的 MacFlow 要从托盘 Quit 后重新启动，才会加载新配置。

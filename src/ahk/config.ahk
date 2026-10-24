@@ -168,6 +168,10 @@ MF_ConfigProfilePolicy() {
     return Map(
         "chrome", {Process: "chrome.exe", Contexts: StrSplit("edit|text|browser", "|")},
         "notepad", {Process: "notepad.exe", Contexts: StrSplit("edit|text", "|")},
+        "claude", {Process: "claude.exe", Contexts: StrSplit("edit|text", "|")},
+        "codex", {Process: "chatgpt.exe", Contexts: StrSplit("edit|text", "|")},
+        "visual_studio", {Process: "devenv.exe", Contexts: StrSplit("edit|text", "|")},
+        "unreal", {Process: "unrealeditor.exe", Contexts: StrSplit("edit|text", "|")},
         "vscode", {Process: "code.exe", Contexts: StrSplit("vscode", "|")},
         "explorer", {Process: "explorer.exe", Contexts: StrSplit("explorer", "|")},
         "windows_terminal", {Process: "windowsterminal.exe", Contexts: StrSplit("terminal", "|")})
@@ -177,6 +181,10 @@ MF_ProfileActionPolicy() {
     return Map(
         "chrome", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward", "|"),
         "notepad", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "claude", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "codex", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "visual_studio", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "unreal", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "vscode", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "explorer", StrSplit("copy|paste|cut|select_all|explorer_new|app_next|app_previous", "|"),
         "windows_terminal", [])

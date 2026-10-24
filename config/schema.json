@@ -154,6 +154,10 @@
               "enum": [
                 "chrome",
                 "notepad",
+                "claude",
+                "codex",
+                "visual_studio",
+                "unreal",
                 "vscode",
                 "explorer",
                 "windows_terminal"

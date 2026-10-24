@@ -1,16 +1,16 @@
 {
   "artifacts": {
-    "macflow.ini": "2d770b65c0c098b0023b8ac34762f44695b4313cc17694923c21688f83cbfbd1"
+    "macflow.ini": "7151da2cbdb5e5eb92077e28cf24fa1a5fd62cc1eee47ca22a33fa0bb0944f6b"
   },
   "delivery_status": "DEVELOPMENT PREVIEW",
   "hardware_validation": "NOT TESTED",
   "mode": "ahk-only",
   "schema_version": 1,
-  "source_hash": "03ad743946957368108db09e01b34999657c1ec34d98317da12eb7f9b2607284",
+  "source_hash": "1f51797ecab4d354fa51f63948e027a41648383b48517a08b9f06cc1dd3e1d41",
   "sources": {
-    "apps.yaml": "26d826628c379709962bd5a3d4a3cc6493ca6b922ba58a9737f197c604958fe0",
+    "apps.yaml": "0ef559dedad23b8b31f1399b06787cfe129a81c9403284755738f37e0af39f2b",
     "mappings.yaml": "0b0db7debb72817bc2b329f3824fe6654514ad39638967dd263d061522caaa12",
-    "release.yaml": "56512657a69b4d1e60c5695f9bc0aa3e547ee713395f458b2914e94c266a84bf",
-    "schema.json": "8e6ce25f48c0e07e8399903538bbe99d6066505b1a51f81781b5aec63c2d0662"
+    "release.yaml": "2737e6b271b0875bf4ea29d49151009f138d41d5b9c6ff1fd01a894cf953a117",
+    "schema.json": "dd6e83ad0a7cdc7a95035f22f2f85b9579ce20b95ab10b85d0e278c3532ee642"
   }
 }

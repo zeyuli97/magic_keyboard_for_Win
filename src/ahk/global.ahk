@@ -52,7 +52,10 @@ MF_GlobalAction(action, profile) {
     }
 
     ; No terminal generic fallback, even if future configuration is mistaken.
-    if profile.Id != "chrome" && profile.Id != "notepad" && profile.Id != "explorer"
+    ; Claude, Codex, Visual Studio and Unreal Editor take Notepad's keys; none of
+    ; them can tell a built-in terminal panel from the editor (decisions.md #14).
+    static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal", "|")
+    if !MF_Contains(direct, profile.Id)
         return false
     static keys := Map(
         "copy", "^c", "paste", "^v", "cut", "^x", "select_all", "^a",

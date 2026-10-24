@@ -14,9 +14,9 @@ PASS 必须全部预期实测符合。BLOCKED 有明确障碍；NOT TESTED 未�
 
 | ID | 操作与预期 |
 | --- | --- |
-| T01 P0 | Chrome、Notepad、VS Code Editor 支持上下文逐项测 ⌘C/V/X/A/Z/ShiftZ/S/F。每项 GLOBAL 每个声明应用均需实际结果；无误触系统动作。VS Code 确认前透传。 |
+| T01 P0 | Chrome、Notepad、VS Code Editor 支持上下文逐项测 ⌘C/V/X/A/Z/ShiftZ/S/F。每项 GLOBAL 每个声明应用均需实际结果；无误触系统动作。VS Code 确认前透传。2026-10-23 起还包括 Claude、Codex、Visual Studio、Unreal Editor：在各自的文字输入处（Claude/Codex 输入框、Visual Studio 编辑器、Unreal 的细节面板文本框或蓝图节点改名）逐项测，Unreal 另在关卡视口里对 Actor 测 ⌘C/V/X/A/Z/ShiftZ/S。自带终端面板里无选区 ⌘C 会中断命令、bash 里 ⌘Z/⌘S 会挂起或停住输出，这是已接受的限制：只用无害命令（如 `ping 127.0.0.1 -t`）观察并记录，不判 FAIL 也不算 PASS。 |
 | T01b P1 | Chrome ⌘T/W/R/ShiftT/[ / ]；⌘L 关闭，记录 BLOCKED 和 Ctrl+L 退路。未来必须聚焦地址栏且不锁屏，替代键不算 PASS。 |
-| T02 P0 | Notepad/VS Code 中英文/软换行/长按；Option 左右/Shift左右/Backspace，⌘左右/上下。选择/删词/定位正确，记录 Home/词边界差异，无卡键。每次 Option 组合后：不得出现 F/E 等菜单访问键提示或菜单获焦；带 Shift 的 Option 组合（先松 Option、先松 Shift 各测一次）后任务栏输入法不得切走。Chrome profile 也启用了这些文本映射，但本用例尚未覆盖 Chrome，门槛会报 UNCOVERED，需 Lead 决定是补测还是关闭。 |
+| T02 P0 | Notepad/VS Code 中英文/软换行/长按；Option 左右/Shift左右/Backspace，⌘左右/上下。选择/删词/定位正确，记录 Home/词边界差异，无卡键。每次 Option 组合后：不得出现 F/E 等菜单访问键提示或菜单获焦；带 Shift 的 Option 组合（先松 Option、先松 Shift 各测一次）后任务栏输入法不得切走。Chrome profile 也启用了这些文本映射，但本用例尚未覆盖 Chrome，门槛会报 UNCOVERED，需 Lead 决定是补测还是关闭。2026-10-23 起在 Claude、Codex、Visual Studio、Unreal Editor 的文字输入处重复本用例；Unreal 关卡视口里 ⌘→ 发送 End（默认把选中物体贴地），⌘↑/↓ 发送 Ctrl+Home/End，只记录视口里实际发生了什么并确认 ⌘Z 能撤销。 |
 | T03 P0 | Windows Terminal 目前整窗 bypass，仅记原生退路和 BLOCKED。未来有/无选区 × 空闲/可中断任务：⌘C 有选区复制不中断，无选区不改哨兵、不输入、不中断；物理 Ctrl+C 无选区中断、选区按原生，Ctrl+D/Z 不变，⌘V 不额外 Enter。 |
 | T04 P0 | VS Code 安装增量后先不确认，再确认 Enable。Editor 重复 T01/T02，Terminal 重复 T03 四象限，可用 ping 127.0.0.1 -t。切搜索框/命令面板，专用键为 noop，不泄露到 shell；保留多行粘贴确认。 |
 | T05 P0 | 启用、Native、退出和结束本次进程后测右⌘E/R/L/V 或独立入口；与原生基线一致，不依赖 MacFlow。右键不可区分时明确替代。 |
@@ -25,7 +25,7 @@ PASS 必须全部预期实测符合。BLOCKED 有明确障碍；NOT TESTED 未�
 | T07 P0 | 鼠标 Native/Quit、按住 Command/Option/Shift 停用、切焦点松键、按 PID 结束本次进程、重复启动、注销重启。2 秒停止并恢复原生是目标；不遗留 Alt/Win、不杀其他脚本、拒绝重复实例、无默认自启。 |
 | T07b P0 | 实际 USB/蓝牙按住修饰键断连重连、睡眠唤醒。无重复/卡键，检查 Ctrl+C、Win+E/L、Alt+Tab；睡眠/会话变化后 Native，手动再启用。未测连接不得声明支持。 |
 | T07c 条件 | 当前 ahk-only 不适用。未来逐一结束引擎/监督进程并测按住键场景；当前结果不能转为双引擎 PASS。 |
-| T07d P0 | 在 Chrome、Notepad、VS Code、Explorer 中各发起一次切换（覆盖表把这四个应用都算作已覆盖）：按住⌘连续 Tab、Shift 逆序、松开确认、Esc 取消、切非白名单应用、中途停用；无 Alt/Win 残留，原生输入正常。注意只有 Esc 是原生取消：超时（10 秒）和中途按下物理 Ctrl/右 Win/右 Alt/左 Alt 都会释放合成 Alt，Windows 会确认当前高亮的窗口。切换器打开时另测按 Q、H、方向键，记录是否触发 Win+Alt 组合；不要测 R（Win+Alt+R 是 Game Bar 录屏）。 |
+| T07d P0 | 在 Chrome、Notepad、VS Code、Explorer，以及 2026-10-23 加入的 Claude、Codex、Visual Studio、Unreal Editor 中各发起一次切换（覆盖表把这八个应用都算作已覆盖）：按住⌘连续 Tab、Shift 逆序、松开确认、Esc 取消、切非白名单应用、中途停用；无 Alt/Win 残留，原生输入正常。注意只有 Esc 是原生取消：超时（10 秒）和中途按下物理 Ctrl/右 Win/右 Alt/左 Alt 都会释放合成 Alt，Windows 会确认当前高亮的窗口。切换器打开时另测按 Q、H、方向键，记录是否触发 Win+Alt 组合；不要测 R（Win+Alt+R 是 Game Bar 录屏）。 |
 | T08 P0 | 独立副本坏配置/未知规则/过期产物、单实例、权限网络日志、应用增量恢复。错误 Native；无未授权驱动/提权/自启、运行时联网或明文日志，只撤销自身修改。 |
 | T09 P1 | Explorer 临时样本复制/粘贴/剪切/全选/新文件夹逐项。删除仍 BLOCKED；未来能回收并还原，未知/网络/可移动位置不永久删除。 |
 

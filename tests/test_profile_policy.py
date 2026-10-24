@@ -9,9 +9,15 @@ from macflow_config import (
     PROTECTED_CHORDS, ALLOWED_HKLS, ConfigError, load_and_validate, validate_bundle,
 )
 from ahk_literals import (
-    function_tokens, return_literal, static_map, contains,
+    function_tokens, return_literal, static_map, static_list, contains,
     action_blocks_with_output,
 )
+
+# Mapped like Notepad at the user's request on 2026-10-23 (decisions.md #14).
+ADDED_APPS = {
+    "claude": "claude.exe", "codex": "chatgpt.exe",
+    "visual_studio": "devenv.exe", "unreal": "unrealeditor.exe",
+}
 
 
 class ActualConfigurationCapabilityTests(unittest.TestCase):
@@ -73,6 +79,23 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
                         "blocked_reason": "",
                     }]
                     with self.assertRaises(ConfigError):
+                        validate_bundle(data)
+
+    def test_added_apps_map_like_notepad_without_browser_or_terminal_contexts(self):
+        profiles = {row["id"]: row for row in self.bundle["apps"]["profiles"]}
+        for profile_id, process in ADDED_APPS.items():
+            with self.subTest(profile=profile_id):
+                self.assertEqual((process, {"edit", "text"}), PROFILE_CONTRACTS[profile_id])
+                self.assertEqual(PROFILE_ACTIONS["notepad"], PROFILE_ACTIONS[profile_id])
+                row = profiles[profile_id]
+                self.assertEqual([process], row["processes"])
+                self.assertEqual({"edit", "text"}, set(row["contexts"]))
+                self.assertTrue(row["enabled"])
+                self.assertFalse(row["requires_integration"])
+                for context in ("browser", "terminal", "vscode"):
+                    data = copy.deepcopy(self.bundle)
+                    next(p for p in data["apps"]["profiles"] if p["id"] == profile_id)["contexts"].append(context)
+                    with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
                         validate_bundle(data)
 
     def test_disabled_unsupported_rule_does_not_claim_a_capability(self):
@@ -158,9 +181,11 @@ class ActualHandlerCoverageTests(unittest.TestCase):
         for body, variable in ((global_body, "keys"), (global_body, "bridge"), (browser_body, "keys")):
             self.assertTrue(contains(body, ["if", "!", variable, ".", "Has", "(", "action", ")", "return", "false"]))
             self.assertTrue(contains(body, ["MF_SendTap", "(", variable, "[", "action", "]", ")", "return", "true"]))
+        direct = static_list(global_body, "direct")
+        self.assertEqual(len(direct), len(set(direct)), "Duplicate direct profile")
+        self.assertEqual({"chrome", "notepad", "explorer", *ADDED_APPS}, set(direct))
         self.assertTrue(contains(global_body, [
-            "if", "profile", ".", "Id", "!=", "chrome", "&&", "profile", ".", "Id", "!=", "notepad",
-            "&&", "profile", ".", "Id", "!=", "explorer", "return", "false",
+            "if", "!", "MF_Contains", "(", "direct", ",", "profile", ".", "Id", ")", "return", "false",
         ]))
         self.assertTrue(contains(global_body, ["if", "profile", ".", "Id", "=", "vscode", "{", "if", "!", "MF", ".", "VscodeReady", "return", "false"]))
         self.assertTrue(contains(browser_body, ["profile", ".", "Id", "!=", "chrome", "return", "false"]))
@@ -190,6 +215,7 @@ class ActualHandlerCoverageTests(unittest.TestCase):
         actual = {
             "chrome": generic | browser | switches,
             "notepad": generic | switches,
+            **{profile_id: generic | switches for profile_id in ADDED_APPS},
             "vscode": bridge | switches,
             "explorer": explorer_generic | explorer_specific | switches,
             "windows_terminal": set(),

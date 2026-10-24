@@ -185,6 +185,13 @@ def static_map(body, name):
     raise AssertionError("Missing handler dispatch map: " + name)
 
 
+def static_list(body, name):
+    for index in range(len(body) - 3):
+        if [item[1] for item in body[index:index + 4]] == ["static", name, ":=", "StrSplit"]:
+            return LiteralReader(body, index + 3).expression()
+    raise AssertionError("Missing handler list: " + name)
+
+
 def contains(body, sequence):
     values = [item[1] for item in body]
     return any(values[index:index + len(sequence)] == sequence for index in range(len(values) - len(sequence) + 1))

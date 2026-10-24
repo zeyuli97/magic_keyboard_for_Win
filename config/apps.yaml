@@ -42,6 +42,54 @@
       "requires_integration": false
     },
     {
+      "id": "claude",
+      "processes": [
+        "claude.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "codex",
+      "processes": [
+        "chatgpt.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "visual_studio",
+      "processes": [
+        "devenv.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "unreal",
+      "processes": [
+        "unrealeditor.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
       "id": "vscode",
       "processes": [
         "code.exe"

@@ -49,6 +49,32 @@ PROFILE_ACTIONS = {
         "delete_word", "line_start", "line_end", "document_start", "document_end",
         "app_next", "app_previous",
     )),
+    # Added at the user's request on 2026-10-23 with Notepad's handler. They cannot
+    # tell a built-in terminal panel from the editor: see docs/decisions.md #14.
+    "claude": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "codex": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "visual_studio": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "unreal": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
     "vscode": frozenset((
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
@@ -65,6 +91,11 @@ PROFILE_ACTIONS = {
 PROFILE_CONTRACTS = {
     "chrome": ("chrome.exe", {"edit", "text", "browser"}),
     "notepad": ("notepad.exe", {"edit", "text"}),
+    "claude": ("claude.exe", {"edit", "text"}),
+    # The Codex desktop app's executable is ChatGPT.exe (OpenAI.Codex package).
+    "codex": ("chatgpt.exe", {"edit", "text"}),
+    "visual_studio": ("devenv.exe", {"edit", "text"}),
+    "unreal": ("unrealeditor.exe", {"edit", "text"}),
     "vscode": ("code.exe", {"vscode"}),
     "explorer": ("explorer.exe", {"explorer"}),
     "windows_terminal": ("windowsterminal.exe", {"terminal"}),
