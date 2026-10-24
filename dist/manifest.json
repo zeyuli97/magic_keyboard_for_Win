@@ -6,7 +6,7 @@
     ".github/workflows/static-checks.yml": "f10c5e78f74e82c3a7e61619197c63d36a653a6739c33216d1dc5fa15d01da50",
     "AGENTS.md": "eb5b1192cb18868a451f412f2ab0bdaa3e2c3f617ca9e3a394ce4ab95a6f9fcb",
     "PLAN.md": "bb0055447af55053b63ca1fac22ba827932d6f61ca8050549253f91dddf8c0b7",
-    "README.md": "31cbb66680bc6e5e1005bc9108ad331842ceb672a100f4bfa96ea83616a5f164",
+    "README.md": "bda92914d73aeb6f83f5ed878ff87abc421afd15ee735075f250ed5f9e902303",
     "build/generated/macflow.ini": "f162ff7cd1669af96536c49428c8be85919a4810ad5a24a4f2eba0aa294d79bb",
     "build/generated/macflow.ini.sha256": "d9c7dbc8bce21fe6b3b33ad0cec27b846c87628aa393e6a37af894b3f6b119fa",
     "build/generated/manifest.json": "f978cdb686799c9978a1dc435f2c663be8e0fcc23f4d0bedab19551fefa4155e",
@@ -67,6 +67,6 @@
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "8b1555dcce6b765fbb28f8e2c3c6c507b52541a6ee6f11cdc50828e71d8473e3",
+  "sha256": "fc901ac15e61e6a21914bcad5598997320056e28169bf0c9b065ddf837711a13",
   "storage": "ZIP_STORED"
 }
