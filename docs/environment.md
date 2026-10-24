@@ -1,13 +1,13 @@
 # 环境与验证边界
 
-状态：**DEVELOPMENT PREVIEW**，2026-10-22。实现工作在 macOS 上进行；没有在此环境运行 AHK、PowerShell Windows API 或 Magic Keyboard 测试。不能把 Python 检查等同于 Windows 运行成功。
+状态：**DEVELOPMENT PREVIEW**。初始实现于 2026-10-22 在 macOS 上完成；2026-10-23 在 Windows x64 25H2 build 26200.9711 上完成 AHK 2.0.19 x64 的语法、Native 配置加载与注册清理自检，以及 PowerShell 模块路径行为回归。Magic Keyboard 真机用例仍未验收；Python、AHK 自检与硬件结果分别记录。
 
 | 项目 | 原型要求 / 当前状态 |
 | --- | --- |
-| Windows | Windows 11 x64，普通交互式用户会话；实际版本/build 待真机填写 |
-| AHK | AutoHotkey v2.0.19+，64-bit；用户自行安装，版本待填写；AHK v1 不支持 |
+| Windows | 本地自检：Windows x64 25H2，build 26200.9711；非管理员用户会话 |
+| AHK | 本地自检：官方 AutoHotkey 2.0.19，64-bit，ZIP/EXE SHA256 已核对；位于项目 `.local/autohotkey/2.0.19/AutoHotkey64.exe`；AHK v1 不支持 |
 | 权限 | 标准用户运行；高权限 AHK 拒绝启动，高权限/无法判定的前台应用旁路 |
-| 键盘 | Magic Keyboard 型号、硬件布局、连接方式待填写；USB 和蓝牙分开验收 |
+| 键盘 | 用户报告 Magic Keyboard 经 USB 连接；型号、硬件布局和修饰键结果待填写；USB 和蓝牙分开验收 |
 | 作用范围 | 不能识别设备：启用后匹配规则影响所有键盘；device_id=null / origin=unknown |
 | 输入布局 | 仅允许前台线程精确 HKL `04090409`；其他布局和中文 IME 整体旁路 |
 | 输入法 | 中文 IME 的英文模式也旁路；候选、组合输入、切换兼容性仍为 NOT TESTED |
@@ -45,6 +45,6 @@ AHK 路径是示例，以实际安装位置为准。启动后显示 Native Mode�
 
 `-SelfTest` 和 `-RegistrationTest` 不能同时使用，AHK 的 `--self-test` 与 `--registration-test` 也互斥。每个有效 smoke 模式都先做 `/validate`；可选自检的每个 AHK 子进程限制 15 秒，超时只结束本次检查启动的子进程并报错。两个自检都要求非管理员 64-bit AHK，没有 CI 提权豁免。单独执行 `--registration-test` 时也遵守相同限制，建议使用 smoke 包装器获得超时和诊断捕获。
 
-本次开发环境未运行 Windows 自检。即使以后 `/validate`、配置初始化或注册自检通过，也不能证明物理按键、焦点路由、托盘操作、合成输入、中文输入法或 Magic Keyboard 硬件行为正确；这些仍按 `docs/compatibility-matrix.md` 和 `docs/test-report.md` 分别验收。
+2026-10-23 本地 `/validate`、配置初始化和注册清理自检已通过。这些结果不能证明物理按键、焦点路由、托盘操作、合成输入、中文输入法或 Magic Keyboard 硬件行为正确；这些仍按 `docs/compatibility-matrix.md` 和 `docs/test-report.md` 分别验收。自检在沙箱外的非管理员进程中执行；AHK 自身的管理员拒绝条件保持生效。
 
 真机记录至少填写 Windows build、AHK 精确版本/路径、应用版本、键盘型号/ANSI-ISO-JIS、USB 或蓝牙、前台 HKL、普通/高权限环境、提交与配置 hash。不要收集窗口标题、输入文本、密码、剪贴板内容。原型没有设备身份或注入来源保证；来源未知是保留限制，不是假定物理输入。

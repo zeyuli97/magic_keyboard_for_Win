@@ -1,6 +1,6 @@
 # MacFlow — 开发预览
 
-用 AutoHotkey v2 尝试在 Windows 上保留 Magic Keyboard 的部分 macOS 快捷键。**当前为 DEVELOPMENT PREVIEW，尚未通过 AHK 原型或 v1.0 验收。** 开发主机为 macOS，Windows 语法、运行及真机结果均未确认。
+用 AutoHotkey v2 尝试在 Windows 上保留 Magic Keyboard 的部分 macOS 快捷键。**当前为 DEVELOPMENT PREVIEW，尚未通过 AHK 原型或 v1.0 验收。** 初始开发在 macOS 上完成；2026-10-23 已在一台 Windows 主机通过 AHK 语法、Native 配置加载和热键注册清理自检。物理按键、应用效果和输入法兼容性仍未验收。
 
 代码包含普通编辑、Option 单词导航、应用切换、Chrome 和部分 Explorer 动作，以及手动配置的 VS Code 桥接。仅允许前台精确 US English 布局 HKL 04090409；中文 IME 等其他布局整窗透传。启用后影响全部键盘，不能仅选 Magic Keyboard。
 

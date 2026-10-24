@@ -1,7 +1,7 @@
 ; Generated configuration is data, never evaluated as AHK source.
 MF_LoadConfig(root) {
     path := root "\build\generated\macflow.ini"
-    expected := Trim(FileRead(path ".sha256", "UTF-8"))
+    expected := Trim(FileRead(path ".sha256", "UTF-8"), " `t`r`n")
     if !RegExMatch(expected, "^[a-f0-9]{64}$") || MF_SHA256(path) != expected
         throw Error("Generated configuration checksum mismatch. Regenerate on the development machine.")
     for source in ["schema.json", "mappings.yaml", "apps.yaml", "release.yaml"] {

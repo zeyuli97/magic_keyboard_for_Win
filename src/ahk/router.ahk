@@ -33,10 +33,10 @@ MF_ForegroundSafe(hwnd) {
     global MF
     try {
         pid := 0
-        thread := DllCall("User32\GetWindowThreadProcessId", "Ptr", hwnd, "UInt*", &pid, "UInt")
-        if !thread || !pid
+        threadId := DllCall("User32\GetWindowThreadProcessId", "Ptr", hwnd, "UInt*", &pid, "UInt")
+        if !threadId || !pid
             return false
-        layout := Format("{:08X}", DllCall("User32\GetKeyboardLayout", "UInt", thread, "UPtr") & 0xFFFFFFFF)
+        layout := Format("{:08X}", DllCall("User32\GetKeyboardLayout", "UInt", threadId, "UPtr") & 0xFFFFFFFF)
         if !MF_Contains(MF.Config.AllowedLayouts, layout)
             return false
         return MF_ProcessNotElevated(pid)

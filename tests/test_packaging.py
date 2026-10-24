@@ -47,7 +47,9 @@ class PackagingTests(unittest.TestCase):
             packager.build_package(self.root)
 
     def test_missing_git_inventory_fails_without_directory_fallback(self):
-        shutil.rmtree(self.root / ".git")
+        # Keep both paths in this test's temporary root. Renaming also works
+        # with Git's read-only object files on Windows; tearDown cleans them.
+        (self.root / ".git").rename(self.root / ".git-unavailable")
         with self.assertRaises(packager.PackageError):
             packager.build_package(self.root)
 
