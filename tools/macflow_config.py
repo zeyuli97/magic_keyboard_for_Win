@@ -28,7 +28,10 @@ BLOCKED_ACTIONS = frozenset((
     "browser_address", "explorer_delete", "terminal_copy", "terminal_paste",
 ))
 PROTECTED_CHORDS = frozenset(("LWin+l", "LWin+Backspace"))
-ALLOWED_HKLS = ("04090409",)
+# US English, and Simplified Chinese 08040804 (Microsoft Pinyin). The runtime maps
+# 08040804 in Chinese and English mode alike: a chord during composition sends
+# the same Windows shortcut that pressing it natively would.
+ALLOWED_HKLS = ("04090409", "08040804")
 # These are implemented capabilities, not all syntactically recognized actions.
 # Keep each profile explicit; changing a context must not silently extend a
 # handler's capability (for example, Explorer cannot handle undo or find).
@@ -192,9 +195,7 @@ def validate_bundle(bundle):
                 _fail(path, "ambiguous chord/context/priority")
             chord_contexts.add(key)
 
-    layouts = _strings(apps["allowed_hkls"], "apps.allowed_hkls", nonempty=True)
-    if tuple(layouts) != ALLOWED_HKLS:
-        _fail("apps.allowed_hkls", "initial backend permits only exact HKL 04090409")
+    _strings(apps["allowed_hkls"], "apps.allowed_hkls", nonempty=True, allowed=ALLOWED_HKLS)
     bypass = set(_strings(apps["bypass_processes"], "apps.bypass_processes", pattern=PROCESS))
     profiles = _list(apps["profiles"], "apps.profiles", nonempty=True)
     ids, active_processes = set(), set()
@@ -261,13 +262,19 @@ def validate_bundle(bundle):
     return bundle
 
 
-def assess_release(bundle):
+def assess_release(bundle, coverage=None):
     """Report gate results from supplied evidence; never upgrade delivery status.
 
     PASS strings are claims supplied by the operator, not authenticated hardware
     evidence. This function cannot establish that a manual test really occurred.
+
+    With a coverage map (see load_coverage), every enabled rule in every enabled
+    profile it reaches must also be exercised by a required or PASS case.
+    Specification section 9 lets the prototype defer P1 cases only when their
+    mappings are closed, and a mapping no case exercises never qualifies.
     """
     validate_bundle(bundle)
+    statuses = {case["id"]: case["status"] for case in bundle["release"]["cases"]}
     result = {}
     for name, field in (("prototype", "required_prototype"), ("v1", "required_v1")):
         required = [case for case in bundle["release"]["cases"] if case[field]]
@@ -275,8 +282,66 @@ def assess_release(bundle):
             {"id": case["id"], "status": case["status"], "reason": case["reason"]}
             for case in required if case["status"] != "PASS"
         ]
+        if coverage is not None:
+            blocking.extend(_coverage_gaps(bundle, coverage, statuses, {case["id"] for case in required}))
         result[name] = {"accepted": bool(required) and not blocking, "blocking": blocking}
     return result
+
+
+def _coverage_gaps(bundle, coverage, statuses, required_ids):
+    """Group enabled rule/profile pairs that no required or PASS case exercises."""
+    groups = {}
+    for profile in bundle["apps"]["profiles"]:
+        if not profile["enabled"]:
+            continue
+        for rule in bundle["mappings"]["mappings"]:
+            if not rule["enabled"] or not set(profile["contexts"]).intersection(rule["contexts"]):
+                continue
+            cases = tuple(sorted(case_id for case_id, (rules, profiles) in coverage.items()
+                                 if rule["id"] in rules and profile["id"] in profiles))
+            # A required case already blocks this gate until it is PASS.
+            if any(case_id in required_ids or statuses.get(case_id) == "PASS" for case_id in cases):
+                continue
+            groups.setdefault((profile["id"], cases), []).append(rule["id"])
+    gaps = []
+    for (profile_id, cases), rule_ids in sorted(groups.items()):
+        rules = ", ".join(sorted(rule_ids))
+        if cases:
+            detail = ", ".join(f"{case_id} {statuses.get(case_id, 'UNKNOWN')}" for case_id in cases)
+            gaps.append({"id": "UNVERIFIED-MAPPINGS", "status": "ENABLED",
+                         "reason": f"{profile_id}: {rules} rely only on {detail}; disable them or PASS that case"})
+        else:
+            gaps.append({"id": "UNCOVERED-MAPPINGS", "status": "ENABLED",
+                         "reason": f"{profile_id}: {rules} have no manual case for this profile; add coverage or disable them"})
+    return gaps
+
+
+def load_coverage(root, bundle):
+    """Read tests/mapping-spec.yaml: which rules each case exercises, and where.
+
+    Returns {case_id: (rules, profiles)}. Raises ConfigError for a missing or
+    inconsistent map; callers must then treat the gates as not accepted.
+    """
+    data = _read_json(Path(root) / "tests" / "mapping-spec.yaml")
+    _object(data, ("schema_version", "cases"), "coverage")
+    _version(data, "coverage")
+    rule_ids = {rule["id"] for rule in bundle["mappings"]["mappings"]}
+    coverage, seen = {}, set()
+    for index, case in enumerate(_list(data["cases"], "coverage.cases", nonempty=True)):
+        path = f"coverage.cases[{index}]"
+        _object(case, ("id", "priority", "rules", "profiles", "acceptance", "hardware_status"), path)
+        _unique_id(case, seen, path)
+        if CASE_PRIORITIES.get(case["id"]) != case["priority"]:
+            _fail(path, "unknown case or incorrect priority")
+        rules = _strings(case["rules"], path + ".rules", allowed=rule_ids)
+        profiles = _strings(case["profiles"], path + ".profiles", allowed=PROFILE_IDS)
+        if rules and not profiles:
+            _fail(path, "a case that exercises rules must name the profiles it covers")
+        _str(case["acceptance"], path + ".acceptance")
+        coverage[case["id"]] = (frozenset(rules), frozenset(profiles))
+    if set(coverage) != set(CASE_PRIORITIES):
+        _fail("coverage.cases", "must list every release case exactly once")
+    return coverage
 
 
 def _validate_schema(value, schema, path):

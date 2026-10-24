@@ -1,7 +1,9 @@
 #Requires AutoHotkey v2.0.19+
 #SingleInstance Off
 #NoTrayIcon
-#Warn
+; StdOut, not MsgBox: a modal warning would stall /validate and the smoke checks
+; until their timeout. tools/smoke-tests.ps1 fails on any reported warning.
+#Warn All, StdOut
 
 ; DEVELOPMENT PREVIEW. No AHK/Windows/hardware success is claimed by this file.
 ; A runtime mutex prevents duplicate mapping engines without killing a live one.
@@ -23,7 +25,8 @@ global MF := {
     SwitchingHwnd: 0, SwitcherStarted: 0, Registered: [],
     SessionRegistered: false, MutexHandle: 0, TrayReady: false,
     LastReason: "Started in Native Mode", ShuttingDown: false,
-    InputDispatchActive: false, ResetPending: false
+    InputDispatchActive: false, ResetPending: false,
+    LastDecision: "none yet", LastDecisionTick: 0
 }
 MF_Main()
 
@@ -33,6 +36,11 @@ MF_Main() {
     KeyHistory(0)
     ListLines(false)
     SendLevel(0)
+    ; AHK's default mask key is Ctrl (measured vk11sc01D on 2.0.19). Ctrl is a
+    ; modifier, so WinUI access keys and the Left Alt+Shift / Ctrl+Shift
+    ; input-language hotkeys may not count it as an intervening key. The
+    ; unassigned vkE8 masks Win/Alt releases instead. NOT hardware-verified.
+    A_MenuMaskKey := "vkE8"
     SetWorkingDir(MF.Root)
     selfTest := false
     registrationTest := false
@@ -277,16 +285,21 @@ MF_UpdateTray() {
 MF_ShowStatus(*) {
     global MF
     hash := IsObject(MF.Config) ? MF.Config.Hash : "not loaded"
+    decision := MF.LastDecision
+    if MF.LastDecisionTick
+        decision .= " (" Round((A_TickCount - MF.LastDecisionTick) / 1000) " s ago)"
     MsgBox("DEVELOPMENT PREVIEW - Windows hardware NOT TESTED"
         . "`nMode: " (MF.Enabled ? "Enabled" : "Native Mode")
         . "`nBackend: AHK only; no Kanata or controller process"
         . "`nVS Code setup acknowledged this run: " (MF.VscodeReady ? "yes" : "no")
         . "`nConfig hash: " hash
         . "`nLast transition: " MF.LastReason
+        . "`nLast mapped-chord decision: " decision
         . "`nError: " (MF.ConfigError != "" ? MF.ConfigError : "none")
         . "`n`nEnabled mappings affect ALL keyboards. Device identity is unknown."
-        . "`nOnly exact US English HKL 04090409 and allowlisted non-elevated apps qualify."
-        . "`nChinese IME/other layouts, Windows Terminal, physical Ctrl and right Command stay native."
+        . "`nOnly US English HKL 04090409 or Simplified Chinese 08040804 (Microsoft Pinyin, either"
+        . " mode) in allowlisted non-elevated apps qualify."
+        . "`nOther layouts, Windows Terminal, physical Ctrl and right Command stay native."
         . "`nCommand+L is blocked; physical Win+L may still lock Windows."
         . "`n`nRecovery: tray Native Mode / Quit; emergency Ctrl+Alt+F12 disables only."
         . "`nNo key contents, clipboard contents or runtime files are recorded.", "MacFlow status")

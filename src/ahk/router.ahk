@@ -1,48 +1,103 @@
 ; No foreground title, text, password or clipboard inspection.
-MF_CurrentProfile() {
+; reason receives a fixed diagnostic label; it never contains key names.
+MF_CurrentProfile(&reason := "") {
     global MF
-    if !MF.Enabled || !IsObject(MF.Config) || A_IsAdmin
+    if !MF.Enabled || !IsObject(MF.Config) || A_IsAdmin {
+        reason := "Native Mode or configuration unavailable"
         return 0
+    }
     hwnd := WinExist("A")
-    if !hwnd || !MF_ForegroundSafe(hwnd)
+    if !hwnd {
+        reason := "no foreground window"
+        return 0
+    }
+    if !MF_ForegroundSafe(hwnd, &reason)
         return 0
     try process := StrLower(WinGetProcessName("ahk_id " hwnd))
-    catch
+    catch {
+        reason := "foreground process unavailable"
         return 0
-    if MF_Contains(MF.Config.BypassProcesses, process)
+    }
+    if MF_Contains(MF.Config.BypassProcesses, process) {
+        reason := "bypassed process " process
         return 0
+    }
     for profile in MF.Config.Profiles {
         if !profile.Enabled || !MF_Contains(profile.Processes, process)
             continue
-        if profile.RequiresIntegration && !MF.VscodeReady
+        if profile.RequiresIntegration && !MF.VscodeReady {
+            reason := "VS Code setup not confirmed for this run"
             return 0
+        }
         if profile.Id = "explorer" {
             try {
-                if !MF_Contains(["CabinetWClass", "ExploreWClass"], WinGetClass("ahk_id " hwnd))
+                if !MF_Contains(["CabinetWClass", "ExploreWClass"], WinGetClass("ahk_id " hwnd)) {
+                    reason := "Explorer window is not a folder window"
                     return 0
+                }
             } catch {
+                reason := "Explorer window class unavailable"
                 return 0
             }
         }
+        reason := "profile " profile.Id
         return profile
     }
+    reason := "process " process " is not allowlisted"
     return 0
 }
 
-MF_ForegroundSafe(hwnd) {
+MF_ForegroundSafe(hwnd, &reason := "") {
     global MF
     try {
         pid := 0
         threadId := DllCall("User32\GetWindowThreadProcessId", "Ptr", hwnd, "UInt*", &pid, "UInt")
-        if !threadId || !pid
+        if !threadId || !pid {
+            reason := "foreground thread unavailable"
             return false
-        layout := Format("{:08X}", DllCall("User32\GetKeyboardLayout", "UInt", threadId, "UPtr") & 0xFFFFFFFF)
-        if !MF_Contains(MF.Config.AllowedLayouts, layout)
+        }
+        ; Keys reach the focus window, whose thread can differ from the top-level
+        ; window's: Windows 11 Notepad edits on its own thread. A layout switch
+        ; updates that input thread while the top-level thread can keep a stale
+        ; layout (seen 2026-10-23: frame 08040804, editor 04090409). Only the
+        ; input thread's layout therefore decides.
+        focus := MF_FocusWindow(threadId)
+        inputThread := focus ? DllCall("User32\GetWindowThreadProcessId", "Ptr", focus, "Ptr", 0, "UInt") : threadId
+        if !inputThread {
+            ; Thread 0 would read this script's own layout, so treat it as unknown.
+            reason := "focus thread unavailable"
             return false
-        return MF_ProcessNotElevated(pid)
+        }
+        ; Simplified Chinese 08040804 maps in Chinese and English mode alike, so no
+        ; IME state is read: a chord during composition sends the same Windows
+        ; shortcut that pressing it natively would.
+        layout := MF_ThreadLayout(inputThread)
+        if !MF_Contains(MF.Config.AllowedLayouts, layout) {
+            reason := "keyboard layout " layout " is not allowed"
+            return false
+        }
+        if !MF_ProcessNotElevated(pid) {
+            reason := "elevated or unknown integrity"
+            return false
+        }
+        return true
     } catch {
+        reason := "foreground check failed"
         return false
     }
+}
+
+MF_ThreadLayout(threadId) {
+    return Format("{:08X}", DllCall("User32\GetKeyboardLayout", "UInt", threadId, "UPtr") & 0xFFFFFFFF)
+}
+
+; GUITHREADINFO.hwndFocus of the foreground thread's input queue, or 0.
+MF_FocusWindow(threadId) {
+    info := Buffer(A_PtrSize = 8 ? 72 : 48, 0)
+    NumPut("UInt", info.Size, info)
+    if !DllCall("User32\GetGUIThreadInfo", "UInt", threadId, "Ptr", info)
+        return 0
+    return NumGet(info, A_PtrSize = 8 ? 16 : 12, "Ptr")
 }
 
 MF_ProcessNotElevated(pid) {

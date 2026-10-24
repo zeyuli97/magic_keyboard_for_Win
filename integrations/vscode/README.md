@@ -2,7 +2,7 @@
 
 This is an experimental Windows desktop VS Code integration for the AHK development preview. The AHK runtime cannot determine whether the editor, integrated terminal, search box or another control has focus. It emits reserved shortcut triggers; VS Code's native `when` clauses select the action. No extension, automatic settings writer, shell escape sequence or clipboard inspection is used.
 
-The profile is configured but bypassed on every MacFlow launch until the user confirms that this setup is installed for the active VS Code profile. Runtime starts in Native Mode independently of this confirmation. Confirmation is not test evidence. The entire window bypasses when its foreground layout is not US English HKL `04090409`, even when a Chinese IME is temporarily in English mode.
+The profile is configured but bypassed on every MacFlow launch until the user confirms that this setup is installed for the active VS Code profile. Runtime starts in Native Mode independently of this confirmation. Confirmation is not test evidence. The entire window bypasses unless its focus window's layout is US English HKL `04090409` or Simplified Chinese `08040804`. Microsoft Pinyin maps in Chinese and English mode alike (candidate, not hardware-verified for VS Code).
 
 ## Setup and collision checks
 
@@ -63,7 +63,7 @@ Use a non-sensitive, disposable file and terminal session; record only case, app
 - In the integrated terminal, test both selection states and no selection while a harmless long-running operation is active. Cmd+C must copy selected text; without selection it must leave the operation running, send no shell bytes, leave the clipboard unchanged and produce no warning. Inspect content manually; do not enable input or clipboard logging.
 - Test Cmd+V with a harmless single-line clipboard value, without Enter. Preserve VS Code's normal paste safeguards. Test all other reserved triggers as no-ops both with and without selection.
 - Independently check physical Ctrl+C/D/Z using the shell's baseline behavior. Do not assume every shell uses the same semantics or that Ctrl+C always interrupts with a selection. Right Command, Native Mode and emergency Disable must preserve the baseline.
-- Test both USB and Bluetooth Magic Keyboard operation, Chinese IME bypass, disconnect/reconnect, wake, and runtime disable while a modifier is held. AHK cannot attribute input to one keyboard, so repeat with another keyboard attached.
+- Test both USB and Bluetooth Magic Keyboard operation, Microsoft Pinyin in Chinese and English mode (including a mapped chord pressed while pinyin is still uncommitted), disconnect/reconnect, wake, and runtime disable while a modifier is held. AHK cannot attribute input to one keyboard, so repeat with another keyboard attached.
 - If any reserved trigger is unknown, leaks to the shell, shows a warning, invokes the wrong action or changes native Control behavior, disable this integration immediately, record FAIL and roll back. A static check or AHK `/validate` cannot establish these outcomes.
 
 ## Rollback

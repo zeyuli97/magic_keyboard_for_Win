@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -154,8 +155,19 @@ class ConfigSemanticsTests(unittest.TestCase):
                 self.data["apps"]["profiles"][0]["processes"] = [process]
                 self.reject()
 
-    def test_unknown_layout_rejected(self):
-        self.data["apps"]["allowed_hkls"].append("08040804")
+    def test_layouts_are_limited_to_us_and_simplified_chinese(self):
+        for layouts in (["E0200804"], ["04090409", "00000409"], ["08040804", "08040804"], []):
+            with self.subTest(layouts=layouts):
+                self.data["apps"]["allowed_hkls"] = layouts
+                self.reject()
+        # Removing 08040804 is the configuration rollback to Chinese-input bypass.
+        for layouts in (["04090409"], ["04090409", "08040804"]):
+            with self.subTest(layouts=layouts):
+                self.data["apps"]["allowed_hkls"] = layouts
+                validate_bundle(self.data)
+
+    def test_removed_ime_english_mode_field_is_rejected(self):
+        self.data["apps"]["ime_english_mode_hkls"] = ["08040804"]
         self.reject()
 
     def test_windows_terminal_profile_stays_disabled(self):
@@ -244,6 +256,44 @@ class ReleaseGateTests(unittest.TestCase):
             with self.assertRaises(ConfigError):
                 assess_release(self.data)
 
+    def coverage(self, **cases):
+        result = {case["id"]: (frozenset(), frozenset()) for case in self.data["release"]["cases"]}
+        for case_id, (rules, profiles) in cases.items():
+            result[case_id] = (frozenset(rules), frozenset(profiles))
+        return result
+
+    def test_p1_only_mapping_must_pass_or_close_for_prototype(self):
+        self.all_pass()
+        case = next(c for c in self.data["release"]["cases"] if c["id"] == "T01b")
+        case.update(status="BLOCKED", reason="Synthetic deferred P1 case")
+        coverage = self.coverage(T01b=({"copy"}, {"chrome"}))
+        gates = assess_release(self.data, coverage)
+        self.assertFalse(gates["prototype"]["accepted"])
+        self.assertEqual(["UNVERIFIED-MAPPINGS"], [row["id"] for row in gates["prototype"]["blocking"]])
+        self.assertIn("T01b BLOCKED", gates["prototype"]["blocking"][0]["reason"])
+        # Closing the mapping is the specification's alternative to a P1 PASS.
+        self.data["mappings"]["mappings"][0]["enabled"] = False
+        self.assertTrue(assess_release(self.data, coverage)["prototype"]["accepted"])
+
+    def test_mapping_without_any_case_blocks_both_gates(self):
+        self.all_pass()
+        gates = assess_release(self.data, self.coverage())
+        for name in ("prototype", "v1"):
+            with self.subTest(gate=name):
+                self.assertFalse(gates[name]["accepted"])
+                self.assertEqual(["UNCOVERED-MAPPINGS"], [row["id"] for row in gates[name]["blocking"]])
+
+    def test_case_for_another_profile_does_not_cover_a_mapping(self):
+        self.all_pass()
+        gates = assess_release(self.data, self.coverage(T01=({"copy"}, {"notepad"})))
+        self.assertFalse(gates["prototype"]["accepted"])
+
+    def test_required_case_coverage_adds_no_extra_gap(self):
+        self.all_pass()
+        gates = assess_release(self.data, self.coverage(T01=({"copy"}, {"chrome"})))
+        self.assertTrue(gates["prototype"]["accepted"])
+        self.assertTrue(gates["v1"]["accepted"])
+
 
 class FileValidationTests(unittest.TestCase):
     def setUp(self):
@@ -269,7 +319,7 @@ class FileValidationTests(unittest.TestCase):
 
     def test_schema_specific_bound_is_enforced(self):
         path = self.root / "config" / "schema.json"
-        schema = json.loads(path.read_text())
+        schema = json.loads(path.read_text(encoding="utf-8"))
         schema["mappings"]["properties"]["mappings"]["items"]["properties"]["priority"]["maximum"] = 9
         path.write_text(json.dumps(schema))
         with self.assertRaisesRegex(ConfigError, "maximum"):
@@ -277,7 +327,7 @@ class FileValidationTests(unittest.TestCase):
 
     def test_unsupported_schema_keyword_is_not_ignored(self):
         path = self.root / "config" / "schema.json"
-        schema = json.loads(path.read_text())
+        schema = json.loads(path.read_text(encoding="utf-8"))
         schema["mappings"]["oneOf"] = []
         path.write_text(json.dumps(schema))
         with self.assertRaisesRegex(ConfigError, "unsupported schema"):
@@ -285,7 +335,7 @@ class FileValidationTests(unittest.TestCase):
 
     def test_schema_boolean_does_not_count_as_integer_enum(self):
         path = self.root / "config" / "apps.yaml"
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         data["schema_version"] = True
         path.write_text(json.dumps(data))
         with self.assertRaises(ConfigError):
@@ -298,6 +348,29 @@ class FileValidationTests(unittest.TestCase):
         self.assertFalse(json.loads(valid.stdout)["gates"]["prototype"]["accepted"])
         gated = subprocess.run(command + ["--gate", "prototype"], text=True, capture_output=True)
         self.assertEqual(2, gated.returncode, gated.stderr)
+
+    def test_cli_without_coverage_map_keeps_config_valid_but_rejects_gates(self):
+        command = [sys.executable, str(ROOT / "tools" / "validate-config.py"), "--root", str(self.root), "--json"]
+        valid = subprocess.run(command, text=True, capture_output=True)
+        self.assertEqual(0, valid.returncode, valid.stderr)
+        for gate in json.loads(valid.stdout)["gates"].values():
+            self.assertFalse(gate["accepted"])
+            self.assertIn("COVERAGE", [row["id"] for row in gate["blocking"]])
+
+    def test_cli_escapes_unencodable_reasons_instead_of_crashing(self):
+        bundle = fixture()
+        bundle["release"]["cases"][0]["reason"] = "等待真机测试"
+        make_root(self.root, bundle)
+        # A redirected stream on the Windows test host uses the cp1252 code page.
+        environment = dict(os.environ, PYTHONIOENCODING="cp1252")
+        command = [sys.executable, str(ROOT / "tools" / "validate-config.py"), "--root", str(self.root)]
+        text = subprocess.run(command, capture_output=True, env=environment)
+        self.assertEqual(0, text.returncode, text.stderr)
+        self.assertIn(b"\\u7b49", text.stdout)
+        report = subprocess.run(command + ["--json"], capture_output=True, env=environment)
+        self.assertEqual(0, report.returncode, report.stderr)
+        reasons = [row["reason"] for row in json.loads(report.stdout)["gates"]["prototype"]["blocking"]]
+        self.assertIn("等待真机测试", reasons)
 
 
 if __name__ == "__main__":

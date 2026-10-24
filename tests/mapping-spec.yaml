@@ -14,6 +14,11 @@
         "global_save",
         "global_find"
       ],
+      "profiles": [
+        "chrome",
+        "notepad",
+        "vscode"
+      ],
       "acceptance": "Every GLOBAL action in every declared supported app context; no unexpected system action.",
       "hardware_status": "NOT TESTED"
     },
@@ -28,6 +33,9 @@
         "browser_back",
         "browser_forward",
         "browser_address"
+      ],
+      "profiles": [
+        "chrome"
       ],
       "acceptance": "Browser actions; Command+L must focus address bar without locking for v1.",
       "hardware_status": "NOT TESTED"
@@ -46,6 +54,10 @@
         "text_document_start",
         "text_document_end"
       ],
+      "profiles": [
+        "notepad",
+        "vscode"
+      ],
       "acceptance": "Word navigation, selection, deletion and line/document navigation without stuck keys.",
       "hardware_status": "NOT TESTED"
     },
@@ -56,6 +68,9 @@
         "terminal_copy",
         "terminal_paste"
       ],
+      "profiles": [
+        "windows_terminal"
+      ],
       "acceptance": "Selected copy without interruption; unselected copy noop; physical Control native baseline.",
       "hardware_status": "NOT TESTED"
     },
@@ -63,6 +78,9 @@
       "id": "T04",
       "priority": "P0",
       "rules": [],
+      "profiles": [
+        "vscode"
+      ],
       "acceptance": "VS Code focus routing; editor T01/T02 and terminal T03; no shell trigger leakage.",
       "hardware_status": "NOT TESTED"
     },
@@ -70,6 +88,7 @@
       "id": "T05",
       "priority": "P0",
       "rules": [],
+      "profiles": [],
       "acceptance": "Independent native operations work while enabled, disabled and after process failure.",
       "hardware_status": "NOT TESTED"
     },
@@ -77,13 +96,15 @@
       "id": "T06",
       "priority": "P0",
       "rules": [],
-      "acceptance": "Actual Chinese IME whole-window bypass preserves composition and native input.",
+      "profiles": [],
+      "acceptance": "Microsoft Pinyin maps like US in Chinese and English mode; typing, candidates, commit/cancel and mode switching stay native, and a chord during composition costs at most the pending pinyin.",
       "hardware_status": "NOT TESTED"
     },
     {
       "id": "T06b",
       "priority": "P0",
       "rules": [],
+      "profiles": [],
       "acceptance": "Unsupported boundaries bypass or require explicit Native Mode; safe desktop return.",
       "hardware_status": "NOT TESTED"
     },
@@ -91,6 +112,7 @@
       "id": "T07",
       "priority": "P0",
       "rules": [],
+      "profiles": [],
       "acceptance": "Mouse disable/quit, process failure, held modifiers and focus/disable races restore native input within target 2 seconds.",
       "hardware_status": "NOT TESTED"
     },
@@ -98,6 +120,7 @@
       "id": "T07b",
       "priority": "P0",
       "rules": [],
+      "profiles": [],
       "acceptance": "Tested keyboard connection changes and sleep resume do not leave synthetic state.",
       "hardware_status": "NOT TESTED"
     },
@@ -105,6 +128,7 @@
       "id": "T07c",
       "priority": "CONDITIONAL",
       "rules": [],
+      "profiles": [],
       "acceptance": "Not applicable to ahk-only; future multi-engine mode requires separate failure tests.",
       "hardware_status": "NOT TESTED"
     },
@@ -115,6 +139,12 @@
         "global_app_next",
         "global_app_previous"
       ],
+      "profiles": [
+        "chrome",
+        "explorer",
+        "notepad",
+        "vscode"
+      ],
       "acceptance": "Held Command application switch, reverse/cancel, foreign modifier during switching and concurrent disable leave no synthetic Alt.",
       "hardware_status": "NOT TESTED"
     },
@@ -122,6 +152,7 @@
       "id": "T08",
       "priority": "P0",
       "rules": [],
+      "profiles": [],
       "acceptance": "Invalid config fail-closed; single instance, no unauthorized actions, privacy and incremental rollback.",
       "hardware_status": "NOT TESTED"
     },
@@ -129,10 +160,17 @@
       "id": "T09",
       "priority": "P1",
       "rules": [
+        "global_copy",
+        "global_paste",
+        "global_cut",
+        "global_select_all",
         "explorer_new",
         "explorer_delete"
       ],
-      "acceptance": "Explorer temporary sample operations; recycle-only deletion and restore required for v1.",
+      "profiles": [
+        "explorer"
+      ],
+      "acceptance": "Explorer temporary sample copy/paste/cut/select-all and new folder; recycle-only deletion and restore required for v1.",
       "hardware_status": "NOT TESTED"
     }
   ]

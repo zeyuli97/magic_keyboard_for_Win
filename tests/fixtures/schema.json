@@ -127,7 +127,8 @@
         "items": {
           "type": "string",
           "enum": [
-            "04090409"
+            "04090409",
+            "08040804"
           ]
         },
         "uniqueItems": true,

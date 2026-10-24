@@ -60,22 +60,41 @@ MF_PhysicalChordMatches(chord) {
 
 MF_CanHandle(chord, *) {
     global MF
-    if !MF.Enabled || !MF_PhysicalChordMatches(chord)
+    if !MF.Enabled
         return false
+    if !MF_PhysicalChordMatches(chord) {
+        MF_NoteDecision("Physical modifiers did not match a mapped chord")
+        return false
+    }
     ; Alt-Tab may focus an OS switcher, so subsequent Tab uses the captured session.
     if MF.SwitcherActive && (chord = "LWin+Tab" || chord = "LWin+Shift+Tab")
         return true
     try {
+        reason := ""
         hwnd := WinExist("A")
-        profile := MF_CurrentProfile()
+        profile := MF_CurrentProfile(&reason)
         rule := MF_SelectRule(chord, profile)
-        if !rule || WinExist("A") != hwnd
+        if !rule || WinExist("A") != hwnd {
+            MF_NoteDecision(!profile ? "Bypassed: " reason
+                : !rule ? "No mapping for this chord in profile " profile.Id
+                : "Foreground changed during the decision")
             return false
+        }
         MF.Pending[chord] := {Hwnd: hwnd, ProfileId: profile.Id, RuleId: rule.Id, Tick: A_TickCount}
+        MF_NoteDecision("Accepted in profile " profile.Id)
         return true
     } catch {
+        MF_NoteDecision("Decision failed")
         return false
     }
+}
+
+; RAM-only diagnostics for Status: a fixed reason label and when it happened.
+; Never records key names, chords, text, window titles or clipboard data.
+MF_NoteDecision(text) {
+    global MF
+    MF.LastDecision := text
+    MF.LastDecisionTick := A_TickCount
 }
 
 MF_HandleChord(chord, *) {
@@ -99,8 +118,12 @@ MF_HandleChord(chord, *) {
 
 MF_HandleChordLocked(chord) {
     global MF
-    if !MF.Enabled || !MF_PhysicalChordMatches(chord)
+    if !MF.Enabled
         return
+    if !MF_PhysicalChordMatches(chord) {
+        MF_NoteDecision("Consumed: modifiers changed before output")
+        return
+    }
     if MF.SwitcherActive && (chord = "LWin+Tab" || chord = "LWin+Shift+Tab") {
         hwnd := WinExist("A")
         if !hwnd || !MF_ForegroundSafe(hwnd) {
@@ -116,37 +139,61 @@ MF_HandleChordLocked(chord) {
     }
     ; Recheck focus after hook dispatch. If it moved, consume instead of injecting
     ; into a new window. No replay can safely guarantee the old target.
-    if !MF.Pending.Has(chord)
+    if !MF.Pending.Has(chord) {
+        MF_NoteDecision("Consumed: no pending decision")
         return
+    }
     pending := MF.Pending[chord]
     MF.Pending.Delete(chord)
-    if WinExist("A") != pending.Hwnd || A_TickCount - pending.Tick > 500
+    if WinExist("A") != pending.Hwnd || A_TickCount - pending.Tick > 500 {
+        MF_NoteDecision("Consumed: foreground changed or decision expired")
         return
+    }
     profile := MF_CurrentProfile()
     rule := MF_SelectRule(chord, profile)
-    if !rule || rule.Id != pending.RuleId || profile.Id != pending.ProfileId
+    if !rule || rule.Id != pending.RuleId || profile.Id != pending.ProfileId {
+        MF_NoteDecision("Consumed: profile or rule changed")
         return
+    }
     MF.DispatchHwnd := pending.Hwnd
+    MF_NoteDecision("Dispatched in profile " profile.Id)
     try MF_RunAction(rule.Action, profile)
     finally MF.DispatchHwnd := 0
 }
 
+; Returns true only when the chord was actually sent to the foreground window.
 MF_SendTap(keys) {
     global MF
     ; Complete chords only; held synthetic Alt is managed explicitly elsewhere.
     if !MF.Enabled
-        return
-    if MF.HasOwnProp("DispatchHwnd") && MF.DispatchHwnd && WinExist("A") != MF.DispatchHwnd
-        return
+        return false
+    if MF.HasOwnProp("DispatchHwnd") && MF.DispatchHwnd && WinExist("A") != MF.DispatchHwnd {
+        MF_NoteDecision("Not sent: foreground changed")
+        return false
+    }
+    reason := "no foreground window"
     hwnd := WinExist("A")
-    if !hwnd || !MF_ForegroundSafe(hwnd) {
+    if !hwnd || !MF_ForegroundSafe(hwnd, &reason) {
+        MF_NoteDecision("Not sent: " reason)
         MF_ResetInput()
-        return
+        return false
     }
     if !MF.Enabled || WinExist("A") != hwnd
-        return
+        return false
     SendLevel(0)
+    ; A physical Option chord leaves Alt logically down. Send releases it for the
+    ; output and restores it afterwards, so Windows and apps can see Alt, or Left
+    ; Alt+Shift, pressed with only modifiers in between: WinUI access keys, menu
+    ; bars and the input-language hotkey react to that. An unassigned
+    ; non-modifier key while Alt is still down, before the output and after the
+    ; restore, breaks those patterns. Hypothesis fix, NOT hardware-verified.
+    altGuard := GetKeyState("LAlt", "P")
+    if altGuard
+        SendEvent("{Blind}{vkE8}")
     SendEvent(keys)
+    if altGuard && GetKeyState("LAlt")
+        SendEvent("{Blind}{vkE8}")
+    return true
 }
 
 MF_HoldSynthetic(key) {
@@ -164,14 +211,17 @@ MF_HoldSynthetic(key) {
     }
 }
 
-MF_ReleaseSynthetic(key) {
+MF_ReleaseSynthetic(key, masked := false) {
     global MF
     if !MF.OwnedKeys.Has(key)
         return
     ; If physically pressed meanwhile, its eventual physical up owns release.
     if !GetKeyState(key, "P") {
         SendLevel(0)
-        SendEvent("{Blind}{" key " up}")
+        ; Masked: an unassigned key separates our Alt down and up, so a lone
+        ; synthetic Alt cannot activate the foreground menu bar. Not used while
+        ; the Alt-Tab switcher may be open.
+        SendEvent(masked ? "{Blind}{vkE8}{" key " up}" : "{Blind}{" key " up}")
     }
     ; Keep ownership until key-up completes, including if OnExit interrupts.
     ; A nested cleanup may have already released/deleted the same owner.
@@ -179,12 +229,12 @@ MF_ReleaseSynthetic(key) {
         MF.OwnedKeys.Delete(key)
 }
 
-MF_CancelSwitch() {
+MF_CancelSwitch(masked := false) {
     global MF
     MF.SwitcherActive := false
     MF.SwitcherStarted := 0
     MF.SwitchingHwnd := 0
-    MF_ReleaseSynthetic("LAlt")
+    MF_ReleaseSynthetic("LAlt", masked)
 }
 
 MF_ResetInput() {

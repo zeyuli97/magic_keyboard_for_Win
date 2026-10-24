@@ -51,3 +51,87 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 环境：Windows x64 25H2 build 26200.9711；Python 3.13.5；PowerShell 7.6.5；官方 AutoHotkey 2.0.19 x64，EXE SHA256 `3880f9ec464dfe78c16bbd8b9f30560227154c292280337346a30c8fd92871fe`。配置 INI SHA256 `fcac4113d35de9f949385c097f1f2391254591847985feea3e8b6da8273ff837`。自动检查操作者为 Codex；物理按键操作者及设备型号/布局待记录。
 
 传入目录不含上游 Git 元数据。本轮在项目 `.local` 中建立本地快照及隔离 Git 工作树，基线 commit 为 `8fc0a0c6a53561f48ecbc409c5ce184ecf57f900`；这是本地验证基线，不是上游提交。本轮差异、集成后源文件 hash 和检查记录保存在 `tests/evidence/local/`。未推送远端；本地检查不代表 GitHub Windows CI 或 Magic Keyboard 真机验收通过。
+
+## 2026-10-23 修复轮（候选修复，硬件 NOT TESTED）
+
+背景：受控 Notepad 测试中，⌥← 已经进入判定、处理和发送，但应用只显示 F/E 菜单访问键、光标不动；“Enabled 但全部不生效、⌘A 打开快速设置”与 Notepad 布局变回 `08040804` 同时出现。候选解释有两点：
+- WinUI 访问键不把 Ctrl（AHK 默认屏蔽键 `vk11sc01D`）当作中间键；
+- ⌥⇧ 组合在 Windows 看来是单独按下又松开的 Left Alt+Shift，触发了默认的输入语言热键。
+
+两者都未经真机证实。改动均在本地分支 `claude/alt-guard-fixes`，未集成到根目录发布文件：
+
+- Option 组合输出前后各插入一次 `{Blind}{vkE8}`；`A_MenuMaskKey` 改为 `vkE8`。
+- `MF_SendTap` 返回是否实际发送；首次 Tab 未发出时立即带屏蔽释放持有的 Alt。
+- Status 显示最近一次映射判定的固定原因（只存内存，不含按键）。
+- `#Warn All, StdOut`，smoke 遇到 AHK 警告即失败。
+- 门槛新增按 rules × profiles 的覆盖检查。
+- 打包测试不再要求源目录是 Git checkout，预览包包含 CI workflow；validate-config 在重定向输出时不再因中文 reason 崩溃；测试读文件统一用 UTF-8。
+- `release.yaml` 更新了基线和 reason 文本，用例状态未改。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| validate-config / generate-config --check | VALID；3 个生成物一致 | 静态 |
+| unittest（worktree） | 87 项通过，0 跳过 | 含新增覆盖、编码、源码防护检查 |
+| unittest（不含 .git 的副本、解压后的新预览包） | 87 项通过 | 验证 R2；只需已安装 Git |
+| AHK /validate、--self-test、--registration-test | PASS，无 `#Warn` 警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
+| smoke 警告检测反向验证 | 注入警告的临时副本按预期失败 | 不涉及按键 |
+| 真机 Option/⌘Tab/输入法复测 | NOT TESTED | 需用户按 FIXES 文档步骤执行 |
+
+配置 INI SHA256 `28d2c07721b0afe29e4dbf7e5b78a6a7f409270cbc94a5d54852ec0c2028c21c`。门槛现报：
+- prototype 额外阻塞：Chrome 浏览器映射只依赖 T01b；Explorer 映射只依赖 T09；Chrome 文本导航无任何用例覆盖。
+- v1 额外阻塞：Chrome 文本导航无任何用例覆盖。
+
+## 2026-10-23 阶段 1：微软拼音英文模式（已被本报告最后一节取代，未集成）
+
+用户报告：Alt 防护版在 ENG 布局下的映射已经生效，包括 Option 导航。这是用户口头报告，不是完整验收运行。
+
+本阶段改动：
+- **生效条件：**微软拼音（`08040804`）只在焦点窗口的 IME 转换模式不含中文位时，才按 US 规则映射。
+- **布局检查：**前台线程和焦点线程的布局都必须合格。
+- **透传：**“中”模式、IME 窗口不可用、查询超时（每次 50 ms）、拿不到焦点线程时，整窗透传，并在 Status 显示原因。
+- **配置：**新增 `apps.ime_english_mode_hkls`，Python、schema 与 AHK 加载器保持一致；发布配置启用了 `08040804`。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| 2026-10-23 交互探针（Notepad） | 中 conv=1025、英 conv=0，10 次切换全部对上；组字期间 conv 不变、无可见候选窗 | 只读：进程名、布局、IME 数值、窗口类名 |
+| validate-config / generate-config --check | VALID；3 个生成物一致 | 静态 |
+| unittest（worktree） | 91 项通过，0 跳过 | 含新增的布局校验、一致性、INI 字段、源码契约检查 |
+| AHK /validate、--self-test、--registration-test | PASS，无警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
+| 只读判定探针（新代码，ENG 前台） | Chrome、Notepad 走 US 路径，判定为可映射 | 拼音分支需在拼音下实测 |
+| 拼音“英”/“中”实机映射，Chrome/VS Code/Explorer 读数 | NOT TESTED | 需用户按 FIXES 文档执行 |
+
+本阶段的配置 INI SHA256 为 `c7517e8e2cb53a09b6b4a88b2c7e2dcec00e4f865d3acf585a4bd4ae1765736b`，source hash 为 `7bb6b7520d5d77333a3c9bbccd2df34da55b2476227bfa3042ddc8c5d6d25273`，取代上一节的值。
+
+## 2026-10-23 布局判定线程修正（候选，硬件 NOT TESTED）
+
+用户在 ENG 下按左 ⌘+A，映射不生效。按用户要求只读诊断，当时的情况：
+- 运行中的是阶段 1 之前的修复版（PID 20992，13:53 启动）。
+- Notepad 顶层窗口线程的布局是 `08040804`。
+- 正文编辑控件在另一个线程，布局是 `04090409`；文本为纯英文，光标后面没有中文。
+
+结论：
+- 原实现只检查顶层线程，于是把 ⌘A 透传成 Win+A。
+- 阶段 1 初版要求两个线程都合格，同样会透传。
+
+现已改为只看焦点窗口所在线程（真正接收按键的线程）的布局。单测 91 项通过，AHK 语法、自检、注册检查通过，无警告。需要用户退出旧实例并重启新版后复测。
+
+## 2026-10-23 拼音“中”模式也映射（候选，硬件 NOT TESTED）
+
+上一节的复测：用户退出旧实例、重启线程修正版后，在 Notepad 按左 ⌘+A 能全选。只试了一次，当时两个线程的布局没有记录。证据见 `tests/evidence/local/2026-10-23-windows-native/usb-input-thread-fix.json`。
+
+本节改动经用户批准，取代阶段 1：
+- **生效条件：**焦点窗口线程的布局为 `04090409` 或 `08040804`，就按 US 规则映射。微软拼音“中”“英”两种模式都映射，不再读输入法状态，也不检测组字。
+- **配置：**`08040804` 移入 `apps.allowed_hkls`；删除 `apps.ime_english_mode_hkls`，再出现会报未知字段。删掉 `08040804` 并重新生成，即恢复中文输入整窗透传。
+- **取舍：**映射只在按住左 ⌘ 或左 ⌥ 时生效，打拼音碰不到。组字时按到映射组合，等于按了对应的 Windows 快捷键：最坏是拼音字母原样上屏或被取消，再加上快捷键本身的效果。原先“中”模式透传，会把同样的按键变成 Win 键快捷键（快速设置、窗口贴边、Chrome 后退），打断更大。组字检测只有在组字时吞掉按键才有用，代价是每次按映射组合都多一次跨进程查询，所以未采用。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| validate-config / generate-config --check | VALID；3 个生成物一致；门槛阻塞项与上一节相同 | 静态 |
+| unittest（worktree） | 91 项通过，0 跳过 | 含布局白名单、旧字段拒绝、INI 字段，以及路由不再查询输入法的源码检查 |
+| unittest、generate-config --check（解压后的新预览包） | 91 项通过；3 个生成物一致 | 解压后运行，包内不含 .git |
+| AHK /validate、--self-test、--registration-test | PASS，无警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
+| 拼音“中”模式映射、组字中误触、⌘⇧Z 是否切换中/英 | NOT TESTED | 需用户按 FIXES 文档执行 |
+
+配置 INI SHA256 为 `645ff2b7cb25f2be47d5ef220feba708796efd26b52941bacdfd03163ea60677`，source hash 为 `0eb5745997dc565f75e9c2e38613356ade17879b9a7671f3d5e61c21374b8f33`，取代前几节的值。
+
+用户报告：重启这一版（20:36Z 启动，晚于最后一次代码修改）后大致测试，没有发现问题。没有说明做了 FIXES 第 11 节的哪些步骤、在哪些应用里测，也没有逐项次数，所以不算完整验收，T06 仍为 NOT TESTED。证据见 `tests/evidence/local/2026-10-23-windows-native/usb-pinyin-both-modes.json`。随后按用户要求提交并集成到项目根目录。

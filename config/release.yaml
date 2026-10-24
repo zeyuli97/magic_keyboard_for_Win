@@ -3,14 +3,14 @@
   "delivery_status": "DEVELOPMENT PREVIEW",
   "mode": "ahk-only",
   "baseline": [
-    "Windows 10/11 exact build pending",
-    "Magic Keyboard model and transport pending",
+    "Windows 11 x64 25H2 build 26200.9711 (local test host)",
+    "Magic Keyboard via USB; model and ANSI/ISO/JIS not recorded; Bluetooth pending",
     "Chrome",
-    "Notepad",
+    "Notepad (Windows 11 app 11.2607.14.0)",
     "VS Code Editor and Integrated Terminal",
     "Windows Terminal + PowerShell",
     "Explorer",
-    "User Chinese IME pending"
+    "Chinese IME: Microsoft Pinyin (zh-Hans-CN) alongside English (US)"
   ],
   "cases": [
     {
@@ -19,7 +19,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed; 2026-10-23 smoke: Notepad Command+A/C/V once (user report)."
     },
     {
       "id": "T01b",
@@ -35,7 +35,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed; 2026-10-23: Option navigation failed before the Alt guard, user reports it working under ENG with the guard build (not a full run)."
     },
     {
       "id": "T03",
@@ -51,7 +51,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed on the Windows test host yet."
     },
     {
       "id": "T05",
@@ -59,7 +59,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed; 2026-10-23 smoke: right Command+E stayed native once (user report)."
     },
     {
       "id": "T06",
@@ -67,7 +67,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed; candidate maps Microsoft Pinyin (08040804) in Chinese and English mode without composition detection."
     },
     {
       "id": "T06b",
@@ -75,7 +75,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed on the Windows test host yet."
     },
     {
       "id": "T07",
@@ -83,7 +83,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed; 2026-10-23 smoke: tray Native restored Command+A to Quick Settings once."
     },
     {
       "id": "T07b",
@@ -91,7 +91,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed on the Windows test host yet."
     },
     {
       "id": "T07c",
@@ -107,7 +107,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed on the Windows test host yet."
     },
     {
       "id": "T08",
@@ -115,7 +115,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Windows + Magic Keyboard unavailable on macOS development host; no hardware test executed."
+      "reason": "Required hardware run not executed on the Windows test host yet."
     },
     {
       "id": "T09",

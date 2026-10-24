@@ -143,11 +143,11 @@ class PythonAhkPolicyParityTests(unittest.TestCase):
 
 class ActualHandlerCoverageTests(unittest.TestCase):
     def test_capabilities_are_backed_by_real_dispatch_maps_and_profile_guards(self):
-        global_body = function_tokens((ROOT / "src/ahk/global.ahk").read_text(), "MF_GlobalAction")
-        browser_body = function_tokens((ROOT / "src/ahk/browser.ahk").read_text(), "MF_BrowserAction")
-        explorer_body = function_tokens((ROOT / "src/ahk/explorer.ahk").read_text(), "MF_ExplorerAction")
-        terminal_body = function_tokens((ROOT / "src/ahk/terminal.ahk").read_text(), "MF_TerminalAction")
-        router_source = (ROOT / "src/ahk/router.ahk").read_text()
+        global_body = function_tokens((ROOT / "src/ahk/global.ahk").read_text(encoding="utf-8"), "MF_GlobalAction")
+        browser_body = function_tokens((ROOT / "src/ahk/browser.ahk").read_text(encoding="utf-8"), "MF_BrowserAction")
+        explorer_body = function_tokens((ROOT / "src/ahk/explorer.ahk").read_text(encoding="utf-8"), "MF_ExplorerAction")
+        terminal_body = function_tokens((ROOT / "src/ahk/terminal.ahk").read_text(encoding="utf-8"), "MF_TerminalAction")
+        router_source = (ROOT / "src/ahk/router.ahk").read_text(encoding="utf-8")
         router = function_tokens(router_source, "MF_CurrentProfile")
         dispatch = function_tokens(router_source, "MF_RunAction")
 

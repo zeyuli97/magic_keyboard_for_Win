@@ -13,8 +13,11 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 TOP_LEVEL = frozenset(("README.md", "AGENTS.md", "PLAN.md"))
+# Explicit files outside the release directories. The shipped test suite checks
+# this CI wiring, so the archive carries it and the suite runs from the archive.
+EXTRA_FILES = frozenset((".github/workflows/static-checks.yml",))
 DIRECTORIES = frozenset(("src", "config", "integrations", "docs", "tools", "tests"))
-REQUIRED = TOP_LEVEL | frozenset((
+REQUIRED = TOP_LEVEL | EXTRA_FILES | frozenset((
     "src/ahk/main.ahk", "config/schema.json", "config/mappings.yaml",
     "config/apps.yaml", "config/release.yaml", "build/generated/macflow.ini",
     "build/generated/macflow.ini.sha256", "build/generated/manifest.json",
@@ -25,6 +28,17 @@ OBJECT_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 
 class PackageError(ValueError):
     pass
+
+
+def is_release_path(name):
+    """Whether a repository-relative POSIX path belongs in the preview archive."""
+    path = PurePosixPath(name)
+    if name in TOP_LEVEL or name in EXTRA_FILES:
+        return True
+    if not (path.parts[0] in DIRECTORIES or path.parts[:2] == ("build", "generated")):
+        return False
+    return not (any(part.startswith(".") or part in ("__pycache__", "local") for part in path.parts)
+                or path.suffix == ".pyc")
 
 
 def _release_entries(root):
@@ -56,9 +70,7 @@ def _release_entries(root):
         path = PurePosixPath(name)
         if path.is_absolute() or ".." in path.parts or "\\" in name:
             raise PackageError("Unsafe tracked path: " + name)
-        if not (name in TOP_LEVEL or path.parts[0] in DIRECTORIES or path.parts[:2] == ("build", "generated")):
-            continue
-        if any(part.startswith(".") or part in ("__pycache__", "local") for part in path.parts) or path.suffix == ".pyc":
+        if not is_release_path(name):
             continue
         if stage != "0" or mode not in ("100644", "100755"):
             raise PackageError("Unmerged or non-regular tracked release file: " + name)

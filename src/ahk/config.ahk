@@ -22,7 +22,7 @@ MF_LoadConfig(root) {
     config.AllowedLayouts := MF_IniList(path, "meta", "allowed_hkls")
     for layout in config.AllowedLayouts
         if !MF_Contains(MF_ConfigAllowedLayouts(), layout)
-            throw Error("Only the US English layout is enabled in this preview.")
+            throw Error("Only the US English and Simplified Chinese (08040804) layouts are enabled in this preview.")
     config.BypassProcesses := MF_IniList(path, "meta", "bypass_processes")
     for process in config.BypassProcesses
         if !RegExMatch(process, "^[a-z0-9_.-]+\.exe$")
@@ -161,7 +161,7 @@ MF_ConfigProtectedChords() {
 }
 
 MF_ConfigAllowedLayouts() {
-    return StrSplit("04090409", "|")
+    return StrSplit("04090409|08040804", "|")
 }
 
 MF_ConfigProfilePolicy() {

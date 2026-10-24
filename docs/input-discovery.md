@@ -28,6 +28,19 @@
 | HKL / IME | US English 与中文 IME 各自记录；输入法切换另测 |
 | 重连 / 唤醒 | 是否重新枚举/映射不同；另作行为验收 |
 
-只将非文本的修饰键观察结果和环境元数据复制到测试报告。发现布局不是精确 US English `04090409` 时应旁路，不能为了“让测试通过”放宽布局白名单。若左右 Command 与合同假设不符，保持 Native 并向 Lead 提交接口变更建议，不临时更改物理 Ctrl/右 Command 行为。
+### 2026-10-23 本地部分结果（PARTIAL，非验收）
+
+来源：`tests/evidence/local/2026-10-23-windows-native/` 下的 `usb-command-discovery.json` 与 `enabled-bypass-diagnosis.json`。用户报告经 USB 连接，型号和 ANSI/ISO/JIS 未记录，其他连接设备未记录。
+
+| 项目 | 观察 | 方法与限制 |
+| --- | --- | --- |
+| Windows | x64 25H2 build 26200.9711，标准用户 | 本地自检记录 |
+| 左 Command | VK 0x5B（LWin），SC 0x05B，extended，down/up 成对 | inspect-keys 截图，无重映射器运行 |
+| 右 Command | VK 0x5C（RWin），SC 0x05C，extended，down/up 成对 | 同上 |
+| 左 Option | Windows 修饰键状态为 LAlt | 12 秒 GetAsyncKeyState 面板；非扫描码或设备归属证明 |
+| 右 Option、Control、Shift、Fn | 未探测 | 仍为 NOT TESTED / UNKNOWN |
+| 输入法 | en-US `0409:00000409` 与微软拼音 zh-Hans-CN | 系统语言列表；未自定义切换热键，按 Windows 默认 Left Alt+Shift |
+
+只将非文本的修饰键观察结果和环境元数据复制到测试报告。发现布局既不是 US English `04090409`，也不是简体中文 `08040804`（本机为微软拼音）时应旁路，不能为了“让测试通过”放宽布局白名单。若左右 Command 与合同假设不符，保持 Native 并向 Lead 提交接口变更建议，不临时更改物理 Ctrl/右 Command 行为。
 
 发现结果仅用于下一步确定映射。它不能验证组合键语义、编辑器/终端焦点、中文候选安全、剪贴板动作、卡键恢复或正式发布门槛。

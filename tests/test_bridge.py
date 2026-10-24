@@ -7,9 +7,9 @@ BINDINGS = ROOT / "integrations/vscode/keybindings.macflow.json"
 
 class BridgeTests(unittest.TestCase):
     def setUp(self):
-        self.bindings = json.loads(BINDINGS.read_text())
-        self.settings = json.loads((BINDINGS.parent / "settings.macflow.json").read_text())
-        self.source = (ROOT / "src/ahk/global.ahk").read_text()
+        self.bindings = json.loads(BINDINGS.read_text(encoding="utf-8"))
+        self.settings = json.loads((BINDINGS.parent / "settings.macflow.json").read_text(encoding="utf-8"))
+        self.source = (ROOT / "src/ahk/global.ahk").read_text(encoding="utf-8")
 
     def test_only_dedicated_triggers_and_nonempty_commands(self):
         for row in self.bindings:
@@ -37,6 +37,6 @@ class BridgeTests(unittest.TestCase):
         pairs = re.findall(r'"([a-z_]+)", "\^!(\+?)\{F(1[3-9]|2[0-4])\}"', self.source)
         triggers = {"ctrl+alt+" + ("shift+" if s else "") + "f" + f for _, s, f in pairs}
         self.assertEqual({r["key"] for r in self.bindings}, triggers)
-        rules = json.loads((ROOT / "config/mappings.yaml").read_text())["mappings"]
+        rules = json.loads((ROOT / "config/mappings.yaml").read_text(encoding="utf-8"))["mappings"]
         required = {r["action"] for r in rules if r["enabled"] and "vscode" in r["contexts"]}
         self.assertTrue((required - {"app_next", "app_previous"}).issubset({a for a, _, _ in pairs}))

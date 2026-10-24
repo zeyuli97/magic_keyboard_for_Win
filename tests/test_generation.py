@@ -44,6 +44,16 @@ class ArtifactGenerationTests(unittest.TestCase):
         ini = generator.build_outputs(self.root)["macflow.ini"].decode("utf-16")
         self.assertIn("blocked_reason=中文说明：待实测", ini)
 
+    def test_allowed_layouts_reach_runtime_data(self):
+        for layouts, expected in ((["04090409", "08040804"], "allowed_hkls=04090409|08040804\r\n"),
+                                  (["04090409"], "allowed_hkls=04090409\r\n")):
+            with self.subTest(layouts=layouts):
+                bundle = fixture()
+                bundle["apps"]["allowed_hkls"] = layouts
+                make_root(self.root, bundle)
+                ini = generator.build_outputs(self.root)["macflow.ini"].decode("utf-16")
+                self.assertIn(expected, ini)
+
     def test_runtime_source_hashes_match_every_packaged_source(self):
         outputs = generator.build_outputs(self.root)
         ini = configparser.ConfigParser(interpolation=None)
@@ -71,7 +81,7 @@ class ArtifactGenerationTests(unittest.TestCase):
     def test_source_change_makes_artifacts_stale(self):
         generator.generate(self.root)
         release = self.root / "config" / "release.yaml"
-        release.write_text(release.read_text() + "\n")
+        release.write_text(release.read_text(encoding="utf-8") + "\n")
         with self.assertRaises(ConfigError):
             generator.generate(self.root, check=True)
 

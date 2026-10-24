@@ -82,6 +82,11 @@ function Invoke-AhkCheck([string[]] $RuntimeArgs, [string] $Label) {
         if ($Child.ExitCode -ne 0) {
             throw "$Label failed with exit code $($Child.ExitCode); see captured diagnostics above."
         }
+        # main.ahk reports #Warn findings on stdout, where /validate still exits 0.
+        # A warning is a source defect, so it fails the check instead of passing.
+        if (($StdoutText + $StderrText) -match '==> Warning:') {
+            throw "$Label reported AHK warnings; see captured diagnostics above."
+        }
         Write-Output "$Label passed. This is not a keyboard compatibility test."
     }
     finally {

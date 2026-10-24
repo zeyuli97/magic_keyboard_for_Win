@@ -8,7 +8,8 @@ MF_GlobalAction(action, profile) {
     if action = "app_next" || action = "app_previous" {
         ; Only Alt is owned across repetitions. Root's polling/lifecycle functions
         ; release it on LWin up, Esc, timeout, bypass, suspend, disable and exit.
-        if !MF.SwitcherActive {
+        starting := !MF.SwitcherActive
+        if starting {
             MF.SwitchingHwnd := WinExist("A")
             MF.SwitcherActive := true
         }
@@ -17,7 +18,11 @@ MF_GlobalAction(action, profile) {
             MF_HoldSynthetic("LAlt")
             ; Preserve owned Alt while AHK adjusts Win/Ctrl/Shift for this tap.
             ; Do not emit an explicit physical-modifier key-up ourselves.
-            MF_SendTap(action = "app_previous" ? "{Blind#^+}+{Tab}" : "{Blind#^+}{Tab}")
+            if !MF_SendTap(action = "app_previous" ? "{Blind#^+}+{Tab}" : "{Blind#^+}{Tab}") {
+                ; No Tab reached Windows: never keep the owned Alt held. Before any
+                ; Tab there is no switcher, so mask the release from the menu bar.
+                MF_CancelSwitch(starting)
+            }
         } catch {
             MF_CancelSwitch()
             throw

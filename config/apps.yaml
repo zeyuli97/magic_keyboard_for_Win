@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "allowed_hkls": [
-    "04090409"
+    "04090409",
+    "08040804"
   ],
   "bypass_processes": [
     "cmd.exe",

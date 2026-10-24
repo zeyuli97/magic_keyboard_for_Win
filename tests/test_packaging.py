@@ -15,11 +15,25 @@ packager = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(packager)
 
 
+def fixture_release_files():
+    """Pick sample files with the packager's own path rule, without Git.
+
+    Only the temporary repository below needs Git. The packager under test still
+    trusts its index exclusively, so this source tree may be an extracted preview
+    archive or a snapshot without .git.
+    """
+    candidates = [ROOT / name for name in packager.TOP_LEVEL | packager.EXTRA_FILES]
+    for directory in sorted(packager.DIRECTORIES) + ["build/generated"]:
+        candidates.extend((ROOT / directory).rglob("*"))
+    names = {path.relative_to(ROOT).as_posix() for path in candidates if path.is_file()}
+    return sorted(name for name in names if packager.is_release_path(name))
+
+
 class PackagingTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="macflow-package-tests-")
         self.root = Path(self.temp.name)
-        for name in packager.release_paths(ROOT):
+        for name in fixture_release_files():
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
