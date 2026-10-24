@@ -145,11 +145,11 @@ MF_ValidateContexts(contexts) {
 ; Literal policy accessors are cross-checked against the Python validator and
 ; actual handler coverage. They are project source, never loaded from user data.
 MF_ConfigActions() {
-    return StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_address|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward|explorer_new|explorer_delete|terminal_copy|terminal_paste", "|")
+    return StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous|browser_address|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward|explorer_new|explorer_delete|terminal_copy|terminal_paste", "|")
 }
 
 MF_ConfigContexts() {
-    return StrSplit("edit|text|browser|explorer|vscode|terminal", "|")
+    return StrSplit("edit|text|paragraph|browser|explorer|vscode|terminal", "|")
 }
 
 MF_ConfigBlockedActions() {
@@ -166,10 +166,10 @@ MF_ConfigAllowedLayouts() {
 
 MF_ConfigProfilePolicy() {
     return Map(
-        "chrome", {Process: "chrome.exe", Contexts: StrSplit("edit|text|browser", "|")},
-        "notepad", {Process: "notepad.exe", Contexts: StrSplit("edit|text", "|")},
-        "claude", {Process: "claude.exe", Contexts: StrSplit("edit|text", "|")},
-        "codex", {Process: "chatgpt.exe", Contexts: StrSplit("edit|text", "|")},
+        "chrome", {Process: "chrome.exe", Contexts: StrSplit("edit|text|paragraph|browser", "|")},
+        "notepad", {Process: "notepad.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
+        "claude", {Process: "claude.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
+        "codex", {Process: "chatgpt.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
         "visual_studio", {Process: "devenv.exe", Contexts: StrSplit("edit|text", "|")},
         "unreal", {Process: "unrealeditor.exe", Contexts: StrSplit("edit|text", "|")},
         "vscode", {Process: "code.exe", Contexts: StrSplit("vscode", "|")},
@@ -179,10 +179,10 @@ MF_ConfigProfilePolicy() {
 
 MF_ProfileActionPolicy() {
     return Map(
-        "chrome", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward", "|"),
-        "notepad", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
-        "claude", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
-        "codex", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "chrome", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward", "|"),
+        "notepad", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
+        "claude", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
+        "codex", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
         "visual_studio", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "unreal", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "vscode", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),

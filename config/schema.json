@@ -31,6 +31,7 @@
                 "enum": [
                   "edit",
                   "text",
+                  "paragraph",
                   "browser",
                   "explorer",
                   "vscode",
@@ -60,6 +61,10 @@
                 "line_end",
                 "document_start",
                 "document_end",
+                "paragraph_up",
+                "paragraph_down",
+                "select_paragraph_up",
+                "select_paragraph_down",
                 "app_next",
                 "app_previous",
                 "browser_address",
@@ -179,6 +184,7 @@
                 "enum": [
                   "edit",
                   "text",
+                  "paragraph",
                   "browser",
                   "explorer",
                   "vscode",

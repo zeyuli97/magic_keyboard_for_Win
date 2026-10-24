@@ -18,6 +18,10 @@ ADDED_APPS = {
     "claude": "claude.exe", "codex": "chatgpt.exe",
     "visual_studio": "devenv.exe", "unreal": "unrealeditor.exe",
 }
+# Option+Up/Down send Ctrl+Up/Down only where that moves by paragraph
+# (2026-10-24, decisions.md #15).
+PARAGRAPH_ACTIONS = frozenset(("paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down"))
+PARAGRAPH_PROFILES = frozenset(("chrome", "notepad", "claude", "codex"))
 
 
 class ActualConfigurationCapabilityTests(unittest.TestCase):
@@ -85,18 +89,41 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
         profiles = {row["id"]: row for row in self.bundle["apps"]["profiles"]}
         for profile_id, process in ADDED_APPS.items():
             with self.subTest(profile=profile_id):
-                self.assertEqual((process, {"edit", "text"}), PROFILE_CONTRACTS[profile_id])
-                self.assertEqual(PROFILE_ACTIONS["notepad"], PROFILE_ACTIONS[profile_id])
+                paragraph = profile_id in PARAGRAPH_PROFILES
+                contexts = {"edit", "text"} | ({"paragraph"} if paragraph else set())
+                self.assertEqual((process, contexts), PROFILE_CONTRACTS[profile_id])
+                self.assertEqual(PROFILE_ACTIONS["notepad"] - (set() if paragraph else PARAGRAPH_ACTIONS),
+                                 PROFILE_ACTIONS[profile_id])
                 row = profiles[profile_id]
                 self.assertEqual([process], row["processes"])
-                self.assertEqual({"edit", "text"}, set(row["contexts"]))
+                self.assertEqual(contexts, set(row["contexts"]))
                 self.assertTrue(row["enabled"])
                 self.assertFalse(row["requires_integration"])
-                for context in ("browser", "terminal", "vscode"):
+                for context in ("browser", "terminal", "vscode") + (() if paragraph else ("paragraph",)):
                     data = copy.deepcopy(self.bundle)
                     next(p for p in data["apps"]["profiles"] if p["id"] == profile_id)["contexts"].append(context)
                     with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
                         validate_bundle(data)
+
+    def test_option_up_down_reach_only_paragraph_profiles(self):
+        rules = [row for row in self.bundle["mappings"]["mappings"] if row["action"] in PARAGRAPH_ACTIONS]
+        self.assertEqual({"LAlt+Up", "LAlt+Down", "LAlt+Shift+Up", "LAlt+Shift+Down"},
+                         {row["physical_chord"] for row in rules})
+        self.assertEqual(PARAGRAPH_ACTIONS, {row["action"] for row in rules})
+        for row in rules:
+            self.assertEqual(["paragraph"], row["contexts"])
+            self.assertTrue(row["enabled"])
+        reached = {p["id"] for p in self.bundle["apps"]["profiles"] if "paragraph" in p["contexts"]}
+        self.assertEqual(PARAGRAPH_PROFILES, reached)
+        self.assertEqual(PARAGRAPH_PROFILES, {name for name, (_, contexts) in PROFILE_CONTRACTS.items()
+                                              if "paragraph" in contexts})
+        for profile_id in ("vscode", "visual_studio", "unreal", "explorer", "windows_terminal"):
+            with self.subTest(profile=profile_id):
+                self.assertFalse(PARAGRAPH_ACTIONS & PROFILE_ACTIONS[profile_id])
+                data = copy.deepcopy(self.bundle)
+                next(p for p in data["apps"]["profiles"] if p["id"] == profile_id)["contexts"].append("paragraph")
+                with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
+                    validate_bundle(data)
 
     def test_disabled_unsupported_rule_does_not_claim_a_capability(self):
         data = copy.deepcopy(self.bundle)
@@ -177,6 +204,15 @@ class ActualHandlerCoverageTests(unittest.TestCase):
         generic = set(static_map(global_body, "keys"))
         bridge = set(static_map(global_body, "bridge"))
         browser = set(static_map(browser_body, "keys"))
+        paragraph = set(static_map(global_body, "paragraph"))
+        self.assertEqual(PARAGRAPH_ACTIONS, paragraph)
+        self.assertFalse(paragraph & generic)
+        # Paragraph keys are sent only to a profile that has the paragraph context.
+        self.assertTrue(contains(global_body, [
+            "if", "paragraph", ".", "Has", "(", "action", ")", "{",
+            "if", "!", "MF_Contains", "(", "profile", ".", "Contexts", ",", "paragraph", ")", "return", "false",
+            "MF_SendTap", "(", "paragraph", "[", "action", "]", ")", "return", "true", "}",
+        ]))
         explorer_specific = action_blocks_with_output(explorer_body)
         for body, variable in ((global_body, "keys"), (global_body, "bridge"), (browser_body, "keys")):
             self.assertTrue(contains(body, ["if", "!", variable, ".", "Has", "(", "action", ")", "return", "false"]))
@@ -213,9 +249,10 @@ class ActualHandlerCoverageTests(unittest.TestCase):
         self.assertTrue(contains(global_body, ["MF_SendTap", "(", "action", "=", "app_previous"]))
 
         actual = {
-            "chrome": generic | browser | switches,
-            "notepad": generic | switches,
-            **{profile_id: generic | switches for profile_id in ADDED_APPS},
+            "chrome": generic | browser | paragraph | switches,
+            "notepad": generic | paragraph | switches,
+            **{profile_id: generic | switches | (paragraph if profile_id in PARAGRAPH_PROFILES else set())
+               for profile_id in ADDED_APPS},
             "vscode": bridge | switches,
             "explorer": explorer_generic | explorer_specific | switches,
             "windows_terminal": set(),

@@ -57,6 +57,18 @@ MF_GlobalAction(action, profile) {
     static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal", "|")
     if !MF_Contains(direct, profile.Id)
         return false
+    ; Ctrl+Up/Down move by paragraph in RichEdit and Chromium text, like Option+
+    ; Up/Down on macOS. Only profiles with the paragraph context get them: Visual
+    ; Studio keeps native Alt+Up/Down (move line), Unreal Editor is unverified.
+    static paragraph := Map(
+        "paragraph_up", "^{Up}", "paragraph_down", "^{Down}",
+        "select_paragraph_up", "^+{Up}", "select_paragraph_down", "^+{Down}")
+    if paragraph.Has(action) {
+        if !MF_Contains(profile.Contexts, "paragraph")
+            return false
+        MF_SendTap(paragraph[action])
+        return true
+    }
     static keys := Map(
         "copy", "^c", "paste", "^v", "cut", "^x", "select_all", "^a",
         "undo", "^z", "redo", "^y", "save", "^s", "find", "^f",

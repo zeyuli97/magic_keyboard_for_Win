@@ -1,16 +1,16 @@
 {
   "artifacts": {
-    "macflow.ini": "7151da2cbdb5e5eb92077e28cf24fa1a5fd62cc1eee47ca22a33fa0bb0944f6b"
+    "macflow.ini": "f162ff7cd1669af96536c49428c8be85919a4810ad5a24a4f2eba0aa294d79bb"
   },
   "delivery_status": "DEVELOPMENT PREVIEW",
   "hardware_validation": "NOT TESTED",
   "mode": "ahk-only",
   "schema_version": 1,
-  "source_hash": "1f51797ecab4d354fa51f63948e027a41648383b48517a08b9f06cc1dd3e1d41",
+  "source_hash": "7df74b8298de6d856db1259008bc7b0396c3cee772d760bbdb7e6975d747c026",
   "sources": {
-    "apps.yaml": "0ef559dedad23b8b31f1399b06787cfe129a81c9403284755738f37e0af39f2b",
-    "mappings.yaml": "0b0db7debb72817bc2b329f3824fe6654514ad39638967dd263d061522caaa12",
+    "apps.yaml": "a990e44277b0d5ef799d9e202a715ddab13973d1662d37a7332fcdfef2e56613",
+    "mappings.yaml": "44317f6e8e4e884a88a8e4060932a8c70bda72df9a83e9124557a4ecf9de4f4a",
     "release.yaml": "2737e6b271b0875bf4ea29d49151009f138d41d5b9c6ff1fd01a894cf953a117",
-    "schema.json": "dd6e83ad0a7cdc7a95035f22f2f85b9579ce20b95ab10b85d0e278c3532ee642"
+    "schema.json": "e2f925bf5edbb841c503f7e76d3cf4b12f5d6ce9205b0d8ba34d2a6d13c8f08d"
   }
 }

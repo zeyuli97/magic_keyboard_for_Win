@@ -43,6 +43,8 @@ VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscod
 
 **Claude、Codex、Visual Studio、Unreal Editor**（2026-10-23 应用户要求加入，未实测）：映射与 Notepad 相同，即 ⌘C/V/X/A/Z、⇧⌘Z、⌘S/F、⌘Tab 和 Option/⌘ 光标移动；⌘W/T/R/L 等浏览器快捷键不映射。MacFlow 只认进程名，分不清应用里的输入框和自带的终端面板。在 Claude、Codex、Visual Studio 的终端面板里，没选中文字时按 ⌘C 会发送 Ctrl+C，中断正在运行的命令；bash 里 ⌘Z 会挂起程序，⌘S 可能让输出停住（按 Ctrl+Q 恢复）。在这些面板里请改用物理 Ctrl。Unreal 的关卡视口里 ⌘→ 发送 End，默认会把选中的物体贴到地面（可 ⌘Z 撤销）。Codex 桌面版的进程名是 ChatGPT.exe，所以如果装了 ChatGPT 桌面版，它也会被映射。Unreal 只支持 UE5 的 UnrealEditor.exe。不想映射某个应用，就把 `config/apps.yaml` 里它的 `enabled` 改成 false，重新生成配置后重启 MacFlow。
 
+**⌥↑/↓ 按段落跳转**（2026-10-24 应用户要求加入，未实测）：在 Notepad、Chrome、Claude、Codex 里，⌥↑/↓ 发送 Ctrl+↑/↓，跳到上一段或下一段，加 ⇧ 则选中。每行单独成段时，效果就是逐行跳到行首。与 Mac 的差别：Mac 的 ⌥↓ 停在本段末尾，这里会跳到下一段。VS Code 和 Visual Studio 里 ⌥↑/↓ 保持原生的“移动行”，和 Mac 上的 VS Code 一样；Explorer 里保持“回上一级”；Unreal 不映射。
+
 ## 停用与恢复
 
 鼠标选择托盘 **Native Mode (disable mappings)** 或 **Quit MacFlow**。Ctrl+Alt+F12 是补充停用入口。无响应时在任务管理器按 PID、路径和命令行仅结束本次 MacFlow 进程，不结束其他 AHK 脚本。必要时使用独立原生设备/鼠标重启。

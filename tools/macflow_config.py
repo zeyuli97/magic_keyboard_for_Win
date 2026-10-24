@@ -14,11 +14,12 @@ class ConfigError(ValueError):
     """A configuration cannot safely be consumed."""
 
 
-CONTEXTS = frozenset(("edit", "text", "browser", "explorer", "vscode", "terminal"))
+CONTEXTS = frozenset(("edit", "text", "paragraph", "browser", "explorer", "vscode", "terminal"))
 ACTIONS = frozenset((
     "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
     "word_left", "word_right", "select_word_left", "select_word_right",
     "delete_word", "line_start", "line_end", "document_start", "document_end",
+    "paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down",
     "app_next", "app_previous", "browser_address", "browser_new",
     "browser_close", "browser_reload", "browser_restore", "browser_back",
     "browser_forward", "explorer_new", "explorer_delete", "terminal_copy",
@@ -40,6 +41,7 @@ PROFILE_ACTIONS = {
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
         "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down",
         "app_next", "app_previous", "browser_new", "browser_close",
         "browser_reload", "browser_restore", "browser_back", "browser_forward",
     )),
@@ -47,6 +49,7 @@ PROFILE_ACTIONS = {
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
         "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down",
         "app_next", "app_previous",
     )),
     # Added at the user's request on 2026-10-23 with Notepad's handler. They cannot
@@ -55,12 +58,14 @@ PROFILE_ACTIONS = {
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
         "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down",
         "app_next", "app_previous",
     )),
     "codex": frozenset((
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
         "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down",
         "app_next", "app_previous",
     )),
     "visual_studio": frozenset((
@@ -89,11 +94,13 @@ PROFILE_ACTIONS = {
 }
 
 PROFILE_CONTRACTS = {
-    "chrome": ("chrome.exe", {"edit", "text", "browser"}),
-    "notepad": ("notepad.exe", {"edit", "text"}),
-    "claude": ("claude.exe", {"edit", "text"}),
+    # paragraph: Ctrl+Up/Down move by paragraph in these editors (RichEdit,
+    # Chromium). Visual Studio, VS Code and Unreal Editor do not get it.
+    "chrome": ("chrome.exe", {"edit", "text", "paragraph", "browser"}),
+    "notepad": ("notepad.exe", {"edit", "text", "paragraph"}),
+    "claude": ("claude.exe", {"edit", "text", "paragraph"}),
     # The Codex desktop app's executable is ChatGPT.exe (OpenAI.Codex package).
-    "codex": ("chatgpt.exe", {"edit", "text"}),
+    "codex": ("chatgpt.exe", {"edit", "text", "paragraph"}),
     "visual_studio": ("devenv.exe", {"edit", "text"}),
     "unreal": ("unrealeditor.exe", {"edit", "text"}),
     "vscode": ("code.exe", {"vscode"}),

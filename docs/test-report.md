@@ -229,3 +229,21 @@ Codex 的审查（根目录 `CODEX-REVIEW-f291682.md`）指出两处问题。两
 | AHK `/validate`、`--self-test`、`--registration-test`（worktree） | 语法通过；两个自检 PASS，无警告 | 运行时按自己的策略加载了新 profile；没有发送输入 |
 
 按用户要求，本节改动已提交并集成到根目录，替换 Codex 正在验收的 `d056b91`；验收从 preflight 重新开始。运行中的 MacFlow 要从托盘 Quit 后重新启动，才会加载新配置。
+
+## 2026-10-24 ⌥↑/↓ 按段落跳转（候选，硬件 NOT TESTED）
+
+用户报告：Notepad 里 ⌥↑/↓ 不会把光标移到上一行或下一行，⌥↑ 之后光标还会消失，要重新点击才出现。原因：规格的文本导航清单里没有 ⌥↑/↓，这两个组合没有映射，Notepad 收到的是原生 Alt+↑/↓。Notepad 的编辑区是 RichEdit 控件（`RichEditD2DPT`，只读查询了窗口类名）。
+
+改动（决策 15）：
+- 新增 `paragraph` 上下文，只给 Chrome、Notepad、Claude、Codex。
+- 新增四条规则：⌥↑/↓ 发送 Ctrl+↑/↓，⌥⇧↑/↓ 发送 Ctrl+⇧↑/↓，走同样的 Alt 防护。
+- VS Code、Visual Studio 保持原生 Alt+↑/↓（移动行），Explorer 保持回上一级，Unreal 不映射。
+- 规则加入 T02 的覆盖；Chrome 不在 T02 里，门槛把它的这四条规则和其他文本规则一起报 UNCOVERED。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| unittest（worktree） | 109 项通过，0 跳过 | 新增：⌥↑/↓ 规则只到达有 paragraph 上下文的四个应用，其他应用加这个上下文会被拒绝；`paragraph` 映射只发给有该上下文的应用 |
+| validate-config、generate-config --check | VALID；3 个生成物一致 | 门槛仍为 NOT ACCEPTED；只有 Chrome 原有的 UNCOVERED 一项多列出四条规则 |
+| AHK `/validate`、`--self-test`、`--registration-test`（worktree） | 语法通过；两个自检 PASS，无警告 | 新的 ⌥↑/↓ 热键能注册并清理；没有发送输入 |
+
+按用户要求，本节改动已提交并集成到根目录，替换 `771fb64`。运行中的 MacFlow 要从托盘 Quit 后重新启动，才会加载新配置。

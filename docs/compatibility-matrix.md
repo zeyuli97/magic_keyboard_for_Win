@@ -8,6 +8,7 @@
 | Chrome 编辑/浏览器（除 ⌘L） | 已有代码；文本导航无用例覆盖 | NOT TESTED | US 或拼音 HKL；门槛报 UNCOVERED，待 Lead 决定 |
 | Notepad / Option 导航 | 候选修复（vkE8 防护）待复测 | NOT TESTED | 2026-10-23 冒烟：修复前 ⌥← 只出现访问键、光标不动；⌘A/C/V 用户冒烟各成功一次（不是 PASS）；装上 Alt 防护后，用户报告 Option 导航可用（不是完整测试） |
 | VS Code Editor / Terminal | 人工集成方案 | NOT TESTED | 每次确认前整个 Code.exe 透传；四象限待测 |
+| ⌥↑/↓ 段落跳转 | 2026-10-24 应用户要求加入：Notepad、Chrome、Claude、Codex 发送 Ctrl+↑/↓（加 ⇧ 选中） | NOT TESTED | 映射前 Notepad 里 ⌥↑/↓ 不动光标，⌥↑ 还会让光标消失（用户报告）；VS Code、Visual Studio 保持原生的移动行，Explorer 保持回上一级，Unreal 不映射；Chrome 未被 T02 覆盖（门槛报 UNCOVERED） |
 | Claude / Codex / Visual Studio / Unreal Editor | 2026-10-23 应用户要求加入，与 Notepad 相同（edit/text） | NOT TESTED | 进程分别为 claude.exe、ChatGPT.exe、devenv.exe、UnrealEditor.exe；自带终端面板同样收到 Ctrl 输出（无选区 ⌘C 会中断命令）；Unreal 视口里 Home/End 是视口命令；超出规格首批范围，待 Lead 确认 |
 | Windows Terminal + PowerShell | BLOCKED | NOT TESTED | 整窗透传；阻止原型验收 |
 | Chrome ⌘L | BLOCKED | NOT TESTED | 不注册；仍可能原生锁屏，Ctrl+L 退路 |

@@ -56,7 +56,11 @@
         "text_line_start",
         "text_line_end",
         "text_document_start",
-        "text_document_end"
+        "text_document_end",
+        "text_paragraph_up",
+        "text_paragraph_down",
+        "text_select_paragraph_up",
+        "text_select_paragraph_down"
       ],
       "profiles": [
         "notepad",
