@@ -21,8 +21,12 @@ REQUIRED = TOP_LEVEL | EXTRA_FILES | frozenset((
     "src/ahk/main.ahk", "config/schema.json", "config/mappings.yaml",
     "config/apps.yaml", "config/release.yaml", "build/generated/macflow.ini",
     "build/generated/macflow.ini.sha256", "build/generated/manifest.json",
-    "tools/smoke-tests.ps1", "tests/manual-checklist.md",
+    "tools/smoke-tests.ps1", "tests/manual-checklist.md", "tools/macflow_config.py",
+    "tools/validate-config.py", "tools/generate-config.py", "tools/package-preview.py",
 ))
+# main.ahk's static includes are as essential as main.ahk: a file never staged
+# would otherwise vanish from the archive and fail only when it loads.
+INCLUDE = re.compile(r"(?m)^#Include %A_ScriptDir%\\([A-Za-z0-9_.-]+\.ahk)[ \t]*\r?$")
 OBJECT_ID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 
 
@@ -39,6 +43,18 @@ def is_release_path(name):
         return False
     return not (any(part.startswith(".") or part in ("__pycache__", "local") for part in path.parts)
                 or path.suffix == ".pyc")
+
+
+def _required(root):
+    """REQUIRED plus every static #Include target of src/ahk/main.ahk."""
+    try:
+        source = (Path(root) / "src/ahk/main.ahk").read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeError):
+        return REQUIRED  # main.ahk is itself required and is reported missing.
+    includes = INCLUDE.findall(source)
+    if not includes:
+        raise PackageError("Cannot read the #Include list of src/ahk/main.ahk.")
+    return REQUIRED | {"src/ahk/" + name for name in includes}
 
 
 def _release_entries(root):
@@ -81,7 +97,7 @@ def _release_entries(root):
         if not target.exists() or not stat.S_ISREG(target.stat().st_mode):
             raise PackageError("Tracked release file is missing/not regular: " + name)
         selected.append((name, object_id))
-    missing = REQUIRED - {name for name, _ in selected}
+    missing = _required(root) - {name for name, _ in selected}
     if missing:
         raise PackageError("Required release files are not indexed: " + ", ".join(sorted(missing)))
     return sorted(selected)

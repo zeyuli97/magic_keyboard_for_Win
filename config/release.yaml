@@ -83,7 +83,7 @@
       "required_prototype": true,
       "required_v1": true,
       "status": "NOT TESTED",
-      "reason": "Required hardware run not executed; 2026-10-23 smoke: tray Native restored Command+A to Quick Settings once."
+      "reason": "Required hardware run not executed; 2026-10-23 smoke: tray Native restored Command+A to Quick Settings once (user report)."
     },
     {
       "id": "T07b",

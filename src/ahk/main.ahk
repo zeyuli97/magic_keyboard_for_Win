@@ -26,7 +26,7 @@ global MF := {
     SessionRegistered: false, MutexHandle: 0, TrayReady: false,
     LastReason: "Started in Native Mode", ShuttingDown: false,
     InputDispatchActive: false, ResetPending: false,
-    LastDecision: "none yet", LastDecisionTick: 0
+    LastDecision: "none yet", LastDecisionTick: 0, StartupState: ""
 }
 MF_Main()
 
@@ -181,8 +181,11 @@ MF_BuildTray() {
     A_TrayMenu.Add("Confirm VS Code setup for this run...", MF_ConfirmVscode)
     A_TrayMenu.Add("Revoke VS Code setup confirmation", MF_RevokeVscode)
     A_TrayMenu.Add()
+    A_TrayMenu.Add("Start at Windows sign-in (Native Mode)", MF_ToggleStartup)
+    A_TrayMenu.Add()
     A_TrayMenu.Add("Quit MacFlow", MF_Quit)
     A_TrayMenu.Default := "Status..."
+    MF.StartupState := MF_StartupState()
     MF.TrayReady := true
     MF_UpdateTray()
 }
@@ -207,7 +210,7 @@ MF_SetEnabled(enabled, *) {
     }
     MF_ResetInput()
     MF.Enabled := true
-    MF.LastReason := "Enabled manually; unknown/elevated apps and non-US layouts still bypass"
+    MF.LastReason := "Enabled manually; unknown/elevated apps and layouts outside the allowlist still bypass"
     MF_UpdateTray()
 }
 
@@ -256,6 +259,54 @@ MF_RevokeVscode(*) {
     MF_UpdateTray()
 }
 
+; Start at sign-in is opt-in: the specification allows it only after the user
+; chooses it, and the first start stays Native. It is one shortcut in this
+; user's Startup folder: no registry Run key, scheduled task or service, never
+; elevated. The shortcut records this copy's runtime and script, so after the
+; folder moves, choosing the item once from the new copy points it there.
+; Returns "this", "other" (another copy or a missing path) or "" (none).
+MF_StartupState() {
+    link := A_Startup "\MacFlow.lnk"
+    if !FileExist(link)
+        return ""
+    ; A failed read leaves the output variables unset, so never compare them then.
+    try FileGetShortcut(link, &target, , &args)
+    catch
+        return "other"
+    return target = A_AhkPath && args = '"' A_ScriptFullPath '"' ? "this" : "other"
+}
+
+MF_ToggleStartup(*) {
+    global MF
+    link := A_Startup "\MacFlow.lnk"
+    state := MF_StartupState()
+    ; The menu shows a cached state. If the shortcut changed outside MacFlow,
+    ; show the real state instead of acting on what the menu displayed.
+    if state != MF.StartupState {
+        MF.StartupState := state
+        MF_UpdateTray()
+        TrayTip("Start at sign-in was changed outside MacFlow. The menu now shows the current state; choose the item again to change it.", "MacFlow", 1)
+        return
+    }
+    try {
+        if state = "this" {
+            FileDelete(link)
+        } else {
+            if state = "other" && MsgBox("A MacFlow sign-in shortcut already starts another copy, or a path that no longer exists."
+                    . "`nReplace it so that sign-in starts this copy?", "MacFlow - start at sign-in", "YesNo Default2 Icon?") != "Yes"
+                return
+            ; The same command as a manual launch: non-elevated, Native Mode first.
+            FileCreateShortcut(A_AhkPath, link, MF.Root, '"' A_ScriptFullPath '"',
+                "MacFlow development preview; starts in Native Mode", A_AhkPath)
+            TrayTip("MacFlow will start at Windows sign-in, in Native Mode. Choose the item again to turn this off.", "MacFlow", 1)
+        }
+    } catch Error as err {
+        MsgBox("The sign-in shortcut could not be changed: " err.Message, "MacFlow", "Icon!")
+    }
+    MF.StartupState := MF_StartupState()
+    MF_UpdateTray()
+}
+
 MF_UpdateTray() {
     global MF
     if !MF.TrayReady
@@ -280,6 +331,11 @@ MF_UpdateTray() {
         A_TrayMenu.Uncheck("Confirm VS Code setup for this run...")
         A_TrayMenu.Disable("Revoke VS Code setup confirmation")
     }
+    ; Cached: rechecked when the tray is built and on every toggle.
+    if MF.StartupState = "this"
+        A_TrayMenu.Check("Start at Windows sign-in (Native Mode)")
+    else
+        A_TrayMenu.Uncheck("Start at Windows sign-in (Native Mode)")
 }
 
 MF_ShowStatus(*) {
@@ -288,21 +344,31 @@ MF_ShowStatus(*) {
     decision := MF.LastDecision
     if MF.LastDecisionTick
         decision .= " (" Round((A_TickCount - MF.LastDecisionTick) / 1000) " s ago)"
+    startup := MF_StartupState()
+    MF.StartupState := startup
+    MF_UpdateTray()
+    layouts := ""
+    if IsObject(MF.Config)
+        for layout in MF.Config.AllowedLayouts
+            layouts .= (layouts = "" ? "" : ", ") layout
     MsgBox("DEVELOPMENT PREVIEW - Windows hardware NOT TESTED"
         . "`nMode: " (MF.Enabled ? "Enabled" : "Native Mode")
         . "`nBackend: AHK only; no Kanata or controller process"
+        . "`nStart at Windows sign-in: " (startup = "this" ? "on for this copy, in Native Mode (Windows Startup apps can still disable it)"
+            : startup = "other" ? "a MacFlow shortcut starts another copy or a missing path" : "off")
         . "`nVS Code setup acknowledged this run: " (MF.VscodeReady ? "yes" : "no")
         . "`nConfig hash: " hash
         . "`nLast transition: " MF.LastReason
         . "`nLast mapped-chord decision: " decision
         . "`nError: " (MF.ConfigError != "" ? MF.ConfigError : "none")
         . "`n`nEnabled mappings affect ALL keyboards. Device identity is unknown."
-        . "`nOnly US English HKL 04090409 or Simplified Chinese 08040804 (Microsoft Pinyin, either"
-        . " mode) in allowlisted non-elevated apps qualify."
+        . "`nMapped layouts (focus window's thread): " (layouts = "" ? "none, configuration not loaded" : layouts)
+        . "`n(04090409 US English; 08040804 Microsoft Pinyin, either IME mode), in allowlisted non-elevated apps only."
         . "`nOther layouts, Windows Terminal, physical Ctrl and right Command stay native."
         . "`nCommand+L is blocked; physical Win+L may still lock Windows."
         . "`n`nRecovery: tray Native Mode / Quit; emergency Ctrl+Alt+F12 disables only."
-        . "`nNo key contents, clipboard contents or runtime files are recorded.", "MacFlow status")
+        . "`nNo key contents, clipboard contents or logs are recorded; the only file MacFlow writes"
+        . " is the optional sign-in shortcut.", "MacFlow status")
 }
 
 MF_LifecyclePoll() {

@@ -97,7 +97,7 @@
       "priority": "P0",
       "rules": [],
       "profiles": [],
-      "acceptance": "Microsoft Pinyin maps like US in Chinese and English mode; typing, candidates, commit/cancel and mode switching stay native, and a chord during composition costs at most the pending pinyin.",
+      "acceptance": "Microsoft Pinyin maps like US in Chinese and English mode; typing, candidates, commit/cancel and mode switching stay native. Chords pressed during composition are recorded, not passed, until Lead signs off the deviation from the specification's composition bypass rule; loss of committed text fails.",
       "hardware_status": "NOT TESTED"
     },
     {

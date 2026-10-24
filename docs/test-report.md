@@ -6,7 +6,7 @@
 
 生成器测试覆盖确定性、UTF-16 中文 round-trip、SHA256、缺失/篡改/陈旧文件及不写入的 --check。VS Code 数据检查覆盖触发键对应、noop、选区条件与跳过 shell 设置，不证明真实应用行为。
 
-初始 macOS 检查及本次 Windows 隔离工作树检查均为 **76 项通过，0 项跳过**。覆盖 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查、Git 索引打包（含拒绝未暂存修改），以及 CI 共用清理脚本和行为测试接入的源码检查。PowerShell 行为脚本另行执行，不计入这 76 项。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；静态结果不代表 AHK 或硬件结果。
+初始 macOS 检查及本次 Windows 隔离工作树检查均为 **76 项通过，0 项跳过**（这是当时的数字；后文各节记录了之后的数量）。覆盖 Explorer undo/find 配置回归、每应用动作能力检查、Python/AHK/schema 策略一致性、实际 handler 支持集检查、Git 索引打包（含拒绝未暂存修改），以及 CI 共用清理脚本和行为测试接入的源码检查。PowerShell 行为脚本另行执行，不计入这 76 项。缺少必须模块不再跳过测试。tools/validate-config.py 报告配置有效；tools/generate-config.py --check 确认 3 个生成产物一致。prototype/v1 均报告 NOT ACCEPTED；静态结果不代表 AHK 或硬件结果。
 
 | 项目 | 状态 | 原因 |
 | --- | --- | --- |
@@ -58,11 +58,11 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 - WinUI 访问键不把 Ctrl（AHK 默认屏蔽键 `vk11sc01D`）当作中间键；
 - ⌥⇧ 组合在 Windows 看来是单独按下又松开的 Left Alt+Shift，触发了默认的输入语言热键。
 
-两者都未经真机证实。改动均在本地分支 `claude/alt-guard-fixes`，未集成到根目录发布文件：
+两者都未经真机证实。改动均在本地分支 `claude/alt-guard-fixes`，当时未集成到根目录（后来随 `f291682` 集成）：
 
 - Option 组合输出前后各插入一次 `{Blind}{vkE8}`；`A_MenuMaskKey` 改为 `vkE8`。
 - `MF_SendTap` 返回是否实际发送；首次 Tab 未发出时立即带屏蔽释放持有的 Alt。
-- Status 显示最近一次映射判定的固定原因（只存内存，不含按键）。
+- Status 显示最近一次映射判定的原因（固定模板，最多带进程名或布局代码；只存内存，不含按键）。
 - `#Warn All, StdOut`，smoke 遇到 AHK 警告即失败。
 - 门槛新增按 rules × profiles 的覆盖检查。
 - 打包测试不再要求源目录是 Git checkout，预览包包含 CI workflow；validate-config 在重定向输出时不再因中文 reason 崩溃；测试读文件统一用 UTF-8。
@@ -72,16 +72,16 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 | --- | --- | --- |
 | validate-config / generate-config --check | VALID；3 个生成物一致 | 静态 |
 | unittest（worktree） | 87 项通过，0 跳过 | 含新增覆盖、编码、源码防护检查 |
-| unittest（不含 .git 的副本、解压后的新预览包） | 87 项通过 | 验证 R2；只需已安装 Git |
+| unittest（不含 .git 的副本、解压后的新预览包） | 87 项通过 | 验证打包测试不再依赖源目录是 Git checkout；只需已安装 Git |
 | AHK /validate、--self-test、--registration-test | PASS，无 `#Warn` 警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
 | smoke 警告检测反向验证 | 注入警告的临时副本按预期失败 | 不涉及按键 |
-| 真机 Option/⌘Tab/输入法复测 | NOT TESTED | 需用户按 FIXES 文档步骤执行 |
+| 真机 Option/⌘Tab/输入法复测 | NOT TESTED | 按验收清单 T02、T06、T07d 执行 |
 
 配置 INI SHA256 `28d2c07721b0afe29e4dbf7e5b78a6a7f409270cbc94a5d54852ec0c2028c21c`。门槛现报：
 - prototype 额外阻塞：Chrome 浏览器映射只依赖 T01b；Explorer 映射只依赖 T09；Chrome 文本导航无任何用例覆盖。
 - v1 额外阻塞：Chrome 文本导航无任何用例覆盖。
 
-## 2026-10-23 阶段 1：微软拼音英文模式（已被本报告最后一节取代，未集成）
+## 2026-10-23 阶段 1：微软拼音英文模式（已被下文“拼音‘中’模式也映射”一节取代，未集成）
 
 用户报告：Alt 防护版在 ENG 布局下的映射已经生效，包括 Option 导航。这是用户口头报告，不是完整验收运行。
 
@@ -98,7 +98,7 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 | unittest（worktree） | 91 项通过，0 跳过 | 含新增的布局校验、一致性、INI 字段、源码契约检查 |
 | AHK /validate、--self-test、--registration-test | PASS，无警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
 | 只读判定探针（新代码，ENG 前台） | Chrome、Notepad 走 US 路径，判定为可映射 | 拼音分支需在拼音下实测 |
-| 拼音“英”/“中”实机映射，Chrome/VS Code/Explorer 读数 | NOT TESTED | 需用户按 FIXES 文档执行 |
+| 拼音“英”/“中”实机映射，Chrome/VS Code/Explorer 读数 | NOT TESTED | 当时计划由用户执行；该设计已被取代 |
 
 本阶段的配置 INI SHA256 为 `c7517e8e2cb53a09b6b4a88b2c7e2dcec00e4f865d3acf585a4bd4ae1765736b`，source hash 为 `7bb6b7520d5d77333a3c9bbccd2df34da55b2476227bfa3042ddc8c5d6d25273`，取代上一节的值。
 
@@ -130,8 +130,77 @@ smoke 脚本并发捕获 UTF-8 stdout/stderr，保留 /ErrorStdOut=UTF-8；每�
 | unittest（worktree） | 91 项通过，0 跳过 | 含布局白名单、旧字段拒绝、INI 字段，以及路由不再查询输入法的源码检查 |
 | unittest、generate-config --check（解压后的新预览包） | 91 项通过；3 个生成物一致 | 解压后运行，包内不含 .git |
 | AHK /validate、--self-test、--registration-test | PASS，无警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
-| 拼音“中”模式映射、组字中误触、⌘⇧Z 是否切换中/英 | NOT TESTED | 需用户按 FIXES 文档执行 |
+| 拼音“中”模式映射、组字中误触、⌘⇧Z 是否切换中/英 | NOT TESTED | 按验收清单 T06 执行；组字期间仍映射偏离原规格，需 Lead 确认 |
 
 配置 INI SHA256 为 `645ff2b7cb25f2be47d5ef220feba708796efd26b52941bacdfd03163ea60677`，source hash 为 `0eb5745997dc565f75e9c2e38613356ade17879b9a7671f3d5e61c21374b8f33`，取代前几节的值。
 
-用户报告：重启这一版（20:36Z 启动，晚于最后一次代码修改）后大致测试，没有发现问题。没有说明做了 FIXES 第 11 节的哪些步骤、在哪些应用里测，也没有逐项次数，所以不算完整验收，T06 仍为 NOT TESTED。证据见 `tests/evidence/local/2026-10-23-windows-native/usb-pinyin-both-modes.json`。随后按用户要求提交并集成到项目根目录。
+用户报告：重启这一版（20:36Z 启动，晚于最后一次代码修改）后大致测试，没有发现问题。没有说明做了验收清单 T06 的哪些步骤、在哪些应用里测，也没有逐项次数，所以不算完整验收，T06 仍为 NOT TESTED。证据见 `tests/evidence/local/2026-10-23-windows-native/usb-pinyin-both-modes.json`。随后按用户要求提交并集成到项目根目录。
+
+## 2026-10-23 Codex 审查 f291682 后的修正（候选，硬件 NOT TESTED）
+
+Codex 的审查（根目录 `CODEX-REVIEW-f291682.md`）指出两处问题。两处都在故障注入探针里复现：探针只用桩函数，不发送真实按键。
+- **CR1（P1）：**Option 组合的前置 vkE8 本身是一次发送，带按键延时；之后没有再检查，就发出了映射输出。现在前置屏蔽之后会重做发送前检查（`MF_SendTargetSafe`：布局与权限、Enabled、仍是同一个前台窗口），任一项不满足就消费这个组合、返回 false。后置屏蔽只发给收到输出的那个窗口。
+- **CR2（P2）：**`GetGUIThreadInfo` 查询失败和“没有焦点窗口”都返回 0，查询失败时会退回到外框线程的布局。现在查询失败直接旁路，Status 显示 `focus window unavailable`；只有查询成功、确实没有焦点窗口时，才看前台窗口线程。
+- **测试辅助函数：**`function_tokens` 原来会把 `if !Name(...) {` 这样的调用当成函数定义，现在只认行首的定义。在 HEAD 源码上对比，测试查找的所有函数体都和原来一样。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| validate-config / generate-config --check | VALID；3 个生成物一致；门槛阻塞项不变 | 静态 |
+| unittest（worktree） | 92 项通过，0 跳过 | 新增发送前复查和焦点查询失败的源码检查 |
+| unittest、generate-config --check（解压后的新预览包） | 92 项通过；3 个生成物一致 | 解压后运行，包内不含 .git |
+| Codex 的故障注入探针（改为读取 worktree 源码，另加“输出后切窗”一例） | 9 例全部符合预期 | 平台查询和发送函数都用桩，不发送真实按键、不装钩子 |
+| AHK /validate、--self-test、--registration-test | PASS，无警告 | AHK 2.0.19 x64，非管理员；不发送输入 |
+| 真机复测 | NOT TESTED | 正常路径的行为应与修正前相同 |
+
+配置没有变：INI SHA256 和 source hash 与上一节相同。
+
+## 2026-10-23 可选开机启动（候选，硬件 NOT TESTED）
+
+用户要求加开机启动功能，由自己决定是否开启。规格允许“用户选择后才开机自启，初次启动保持 Native Mode”，卸载时要一并移除。
+- 托盘新增 **Start at Windows sign-in (Native Mode)**，默认不勾选。选择后在当前用户的“启动”文件夹写入 `MacFlow.lnk`：目标是正在运行的 AutoHotkey，参数是这份副本的 `main.ahk`。再选一次删除。不写注册表、不建计划任务、不提权。
+- 只有快捷方式启动的正是当前这份副本时才显示勾选。它启动另一份副本、指向不存在的路径或文件读不出来时，选择前先询问是否替换。Status 显示当前状态。
+- AGENTS.md 的“不得开启自启”按规格改为“默认关闭，只能由用户在托盘开启”。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| unittest（worktree） | 95 项通过，0 跳过 | 新增：只有托盘选项写快捷方式；源码里没有注册表、计划任务或服务写入；测试模式不经过托盘；状态判断，以及替换前先询问 |
+| unittest、generate-config --check（解压后的新预览包，60 个文件） | 95 项通过；3 个生成物一致 | 解压后运行，包内不含 .git |
+| 隔离探针（真实 Windows 快捷方式接口，只写临时目录） | 17 项全部符合预期；真实“启动”文件夹没有变化；快捷方式不带管理员标志 | 发现并修正一处问题：读不出的快捷方式会让 `FileGetShortcut` 的输出变量保持未赋值，原代码随后比较会抛 UnsetError，MacFlow 建托盘时就会出错 |
+| AHK /validate、--self-test、--registration-test | PASS，无警告 | 这两种自检不建托盘，不涉及开机启动 |
+| 真机：登录后自动启动 | NOT TESTED | 按验收清单的“T07 开机启动追加”执行 |
+
+## 2026-10-23 合并前的全面检查（三路独立审查，硬件 NOT TESTED）
+
+用户要求合并前再做一次全面检查。三个独立审查分别看 AHK 运行时、工具/测试/打包、文档与代码的一致性；都是只读审查，没有运行会发送按键或安装钩子的脚本。结果：没有 P0；P1 一项（文档）；其余为 P2/P3。确认属实的都已修正：
+
+- **与规格的偏离（文档 P1）：**组字期间仍映射，偏离原规格的 P0 中文 IME 要求和 T06。contracts、decisions、README、environment、兼容矩阵、PLAN 都写明了这一点，需要 Lead 签字；验收清单 T06 改为组字中的结果只记录、不判 PASS，每个组合按 10 次，已上屏文字丢失记 FAIL。
+- **开机启动的勾选状态可能过期（AHK P2）：**快捷方式在 MacFlow 之外被删掉后，托盘仍显示勾选，此时点击会重新创建它。现在点击时若发现状态已在外部改变，只刷新勾选并提示，不写文件；打开 Status 也会刷新勾选。
+- **打包可能静默漏文件（工具 P2）：**未暂存的新源文件不会进包，也不报错。现在 `main.ahk` 的每个 `#Include` 文件和四个 Python 工具都是必需文件，缺了就拒绝打包。
+- **测试辅助函数会读到注释里的旧函数（工具 P2）：**`function_tokens` 现在只认“行首第一个词”的定义，跳过注释和字符串，找到多个定义就报错。
+- **其余修正（P3）：**
+  - `MF_SendTap` 只读一次前台窗口，有派发窗口时就以它为目标。
+  - 输出不带 Shift 而用户按着 Shift 时（⌘⇧Z 发 Ctrl+Y），也补发后置 vkE8，防止输入法把恢复的 Shift 当成单按（推测性防护，未实测）。
+  - Status 显示配置里实际允许的布局；“non-US layouts still bypass”等旧文案已改。
+  - 配置校验对齐运行时：最多 256 条规则；拒绝无法写成 UTF-16 的孤立代理字符；超长整数也报 ConfigError。
+  - 覆盖表：`hardware_status` 只能取已知状态，且不能记 release.yaml 没有的 PASS；列出的应用和规则必须能互相作用。
+  - UNVERIFIED 提示改为“去掉该应用的上下文、关闭该应用配置，或让用例 PASS”。
+  - 测试补强：开机启动入口按名字计数，防止被定时器等方式绕过；输入法查询的禁用检查扫描全部 AHK 源码；测试用 schema 与正式 schema 必须一致。
+  - 文档措辞：回退拼音映射后需要重启；“单次成功”不再写成 PASS；“启动应用”开关只是禁用；只在保留的副本里开启开机启动；Quit 不取消开机启动。
+- **记录为已知限制、没有改代码：**
+  - Windows“启动应用”禁用状态不读注册表，托盘照旧显示勾选；
+  - 同一路径的不同写法（8.3 短名、UNC）可能被当成“另一份副本”；
+  - `MF.SwitchingHwnd` 只写不读（契约字段，保留）；
+  - 本机没有 PowerShell 7，CI 模块路径测试没有在本机运行。
+
+| 检查 | 结果 | 范围 |
+| --- | --- | --- |
+| unittest（worktree） | 107 项通过，0 跳过 | 新增打包必需文件、`function_tokens` 注释与重复定义、配置上限与编码、覆盖表一致性、开机启动过期勾选、Shift 防护等检查 |
+| unittest、validate-config、generate-config --check（解压后的新预览包，61 个文件） | 107 项通过；VALID；3 个生成物一致 | 解压后运行，包内不含 .git |
+| 故障注入探针（发送与焦点，桩函数） | 11 项全部符合预期 | 含 Codex 的 8 项、“输出后切窗”和两项 Shift 用例 |
+| 开机启动探针（真实快捷方式接口，只写临时目录） | 24 项全部符合预期 | 含“外部删除后点击不会重新创建”；真实“启动”文件夹没有变化 |
+| AHK /validate、--self-test、--registration-test | PASS，无警告 | 见本节末尾的复跑 |
+| validate-config --gate prototype / v1 | 均 NOT ACCEPTED（退出码 2） | 必需用例全部 NOT TESTED，T03、T01b、T09 为 BLOCKED，另有 UNCOVERED/UNVERIFIED 映射 |
+
+复跑（最终代码）：AHK `/validate`、`--self-test`、`--registration-test` 均 PASS，无警告。schema 增加了规则数上限，release.yaml 中 T07 的说明补了“user report”，所以配置哈希变了：INI SHA256 为 `2d770b65c0c098b0023b8ac34762f44695b4313cc17694923c21688f83cbfbd1`，source hash（托盘 Status 的 Config hash）为 `03ad743946957368108db09e01b34999657c1ec34d98317da12eb7f9b2607284`。
+
+检查完成后，按用户要求提交并集成到项目根目录，作为开发预览版交给 Codex 做真机验收。这一步没有新增任何硬件结果，所有用例仍为 NOT TESTED 或 BLOCKED。

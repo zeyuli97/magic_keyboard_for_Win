@@ -111,6 +111,9 @@ def _str(value, path, *, nonempty=True):
         _fail(path, "must be a nonempty string" if nonempty else "must be a string")
     if any(ord(char) < 32 for char in value):
         _fail(path, "must be a single line without control characters")
+    # A lone \ud800-style escape is valid JSON but cannot be written as UTF-16.
+    if any(0xD800 <= ord(char) <= 0xDFFF for char in value):
+        _fail(path, "must not contain unpaired surrogate code points")
     return value
 
 
@@ -161,6 +164,8 @@ def validate_bundle(bundle):
         _version(value, name)
 
     rules = _list(mappings["mappings"], "mappings.mappings", nonempty=True)
+    if len(rules) > 256:
+        _fail("mappings.mappings", "at most 256 rules (the runtime loader's limit)")
     ids, chord_contexts = set(), set()
     for index, rule in enumerate(rules):
         path = f"mappings.mappings[{index}]"
@@ -309,7 +314,8 @@ def _coverage_gaps(bundle, coverage, statuses, required_ids):
         if cases:
             detail = ", ".join(f"{case_id} {statuses.get(case_id, 'UNKNOWN')}" for case_id in cases)
             gaps.append({"id": "UNVERIFIED-MAPPINGS", "status": "ENABLED",
-                         "reason": f"{profile_id}: {rules} rely only on {detail}; disable them or PASS that case"})
+                         "reason": f"{profile_id}: {rules} rely only on {detail}; remove this profile's context "
+                                   "from them, disable the profile, or PASS that case"})
         else:
             gaps.append({"id": "UNCOVERED-MAPPINGS", "status": "ENABLED",
                          "reason": f"{profile_id}: {rules} have no manual case for this profile; add coverage or disable them"})
@@ -325,7 +331,9 @@ def load_coverage(root, bundle):
     data = _read_json(Path(root) / "tests" / "mapping-spec.yaml")
     _object(data, ("schema_version", "cases"), "coverage")
     _version(data, "coverage")
-    rule_ids = {rule["id"] for rule in bundle["mappings"]["mappings"]}
+    rule_contexts = {rule["id"]: set(rule["contexts"]) for rule in bundle["mappings"]["mappings"]}
+    reach = {profile["id"]: set(profile["contexts"]) for profile in bundle["apps"]["profiles"]}
+    release_status = {case["id"]: case["status"] for case in bundle["release"]["cases"]}
     coverage, seen = {}, set()
     for index, case in enumerate(_list(data["cases"], "coverage.cases", nonempty=True)):
         path = f"coverage.cases[{index}]"
@@ -333,11 +341,27 @@ def load_coverage(root, bundle):
         _unique_id(case, seen, path)
         if CASE_PRIORITIES.get(case["id"]) != case["priority"]:
             _fail(path, "unknown case or incorrect priority")
-        rules = _strings(case["rules"], path + ".rules", allowed=rule_ids)
+        rules = _strings(case["rules"], path + ".rules", allowed=set(rule_contexts))
         profiles = _strings(case["profiles"], path + ".profiles", allowed=PROFILE_IDS)
         if rules and not profiles:
             _fail(path, "a case that exercises rules must name the profiles it covers")
+        # When a case lists rules, every listed profile must reach one of them and
+        # vice versa, so a case cannot claim coverage where it never runs a rule.
+        # A case without rules (such as VS Code setup) names profiles only.
+        for profile_id in profiles if rules else ():
+            if not any(reach.get(profile_id, set()) & rule_contexts[rule_id] for rule_id in rules):
+                _fail(path + ".profiles", f"{profile_id} reaches none of this case's rules")
+        for rule_id in rules:
+            if not any(reach.get(profile_id, set()) & rule_contexts[rule_id] for profile_id in profiles):
+                _fail(path + ".rules", f"{rule_id} is reached by none of this case's profiles")
         _str(case["acceptance"], path + ".acceptance")
+        # Hardware status traces runs (a BLOCKED case is still NOT TESTED on
+        # hardware). It may never claim a PASS that release.yaml, which the
+        # gates read, does not record.
+        if case["hardware_status"] not in STATUSES:
+            _fail(path + ".hardware_status", "unknown status")
+        if case["hardware_status"] == "PASS" and release_status.get(case["id"]) != "PASS":
+            _fail(path + ".hardware_status", "cannot claim a PASS that release.yaml does not record")
         coverage[case["id"]] = (frozenset(rules), frozenset(profiles))
     if set(coverage) != set(CASE_PRIORITIES):
         _fail("coverage.cases", "must list every release case exactly once")
@@ -422,7 +446,9 @@ def _constant(_value):
 def _read_json(path):
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"), object_pairs_hook=_pairs, parse_constant=_constant)
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    # ValueError also covers integers beyond Python's digit limit, which are not
+    # JSONDecodeError; deep nesting raises RecursionError.
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         raise ConfigError(f"{path.name}: cannot read strict JSON ({type(exc).__name__})") from exc
 
 

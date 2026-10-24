@@ -170,6 +170,23 @@ class ConfigSemanticsTests(unittest.TestCase):
         self.data["apps"]["ime_english_mode_hkls"] = ["08040804"]
         self.reject()
 
+    def test_rule_count_is_capped_at_the_runtime_limit(self):
+        # The AHK loader accepts rule_count 1..256; Python must not pass more.
+        template = self.data["mappings"]["mappings"][0]
+        self.data["mappings"]["mappings"] = [dict(template, id=f"rule{n}", priority=n) for n in range(257)]
+        with self.assertRaisesRegex(ConfigError, "256"):
+            validate_bundle(self.data)
+        self.data["mappings"]["mappings"].pop()
+        validate_bundle(self.data)
+
+    def test_unpaired_surrogate_is_rejected_before_generation(self):
+        # Valid JSON, but the generator could not write it as UTF-16.
+        self.data["mappings"]["mappings"][0].update(enabled=False, blocked_reason="\ud800")
+        self.reject()
+
+    def test_fixture_schema_matches_the_real_schema(self):
+        self.assertEqual((ROOT / "config" / "schema.json").read_bytes(), (FIXTURES / "schema.json").read_bytes())
+
     def test_windows_terminal_profile_stays_disabled(self):
         self.data["apps"]["profiles"].append({
             "id": "windows_terminal", "processes": ["windowsterminal.exe"],
@@ -331,6 +348,12 @@ class FileValidationTests(unittest.TestCase):
         schema["mappings"]["oneOf"] = []
         path.write_text(json.dumps(schema))
         with self.assertRaisesRegex(ConfigError, "unsupported schema"):
+            load_and_validate(self.root)
+
+    def test_oversized_integer_is_a_config_error(self):
+        # Beyond Python's digit limit json raises a plain ValueError.
+        (self.root / "config" / "apps.yaml").write_text('{"schema_version": ' + "9" * 5000 + "}", encoding="utf-8")
+        with self.assertRaises(ConfigError):
             load_and_validate(self.root)
 
     def test_schema_boolean_does_not_count_as_integer_enum(self):

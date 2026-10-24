@@ -2,13 +2,13 @@
 
 用 AutoHotkey v2 尝试在 Windows 上保留 Magic Keyboard 的部分 macOS 快捷键。**当前为 DEVELOPMENT PREVIEW，尚未通过 AHK 原型或 v1.0 验收。** 初始开发在 macOS 上完成；2026-10-23 已在一台 Windows 主机通过 AHK 语法、Native 配置加载和热键注册清理自检。物理按键、应用效果和输入法兼容性仍未验收。
 
-代码包含普通编辑、Option 单词导航、应用切换、Chrome 和部分 Explorer 动作，以及手动配置的 VS Code 桥接。前台窗口中接收按键的焦点控件，布局须为 US English（HKL 04090409）或简体中文（08040804，本机为微软拼音）才映射；拼音的“中”“英”两种模式都映射，其他布局整窗透传。映射只在按住左 ⌘ 或左 ⌥ 时生效，所以打拼音、选词、用 Shift 切中/英都不受影响。拼音还没上屏时按到映射组合，效果等于按了对应的 Windows 快捷键：这几个拼音字母可能原样上屏或被取消，然后执行快捷键。启用后影响全部键盘，不能仅选 Magic Keyboard。
+代码包含普通编辑、Option 单词导航、应用切换、Chrome 和部分 Explorer 动作，以及手动配置的 VS Code 桥接。前台窗口中接收按键的焦点控件，布局须为 US English（HKL 04090409）或简体中文（08040804，本机为微软拼音）才映射；拼音的“中”“英”两种模式都映射，其他布局整窗透传。映射只在按住左 ⌘ 或左 ⌥ 时生效，所以打拼音、选词、用 Shift 切中/英本身不会触发映射。拼音还没上屏时按到映射组合，预期效果与直接按对应的 Windows 快捷键相同：这几个拼音字母可能原样上屏或被取消，然后执行快捷键。这一点和 ⌘⇧Z 等带 Shift 的组合会不会误切中/英，都还没有实测（见验收清单 T06）。原规格要求“无法判断组字状态时 bypass”，这里的做法偏离了规格，需要 Lead 确认。启用后影响全部键盘，不能仅选 Magic Keyboard。
 
 明确关闭：Windows Terminal 整个宿主、⌘L、Explorer ⌘Backspace。物理左⌘L 仍可能锁屏，地址栏使用原生 Ctrl+L。Windows Terminal 的无选区复制适配受阻，因此当前不能通过完整原型验收。
 
 ## Windows 启动
 
-使用完整项目目录或解压后的预览包。需要已安装的 **64 位 AutoHotkey v2.0.19+**；不以管理员运行。构建配置需要 Python 3.9+，运行预览包内已生成配置不需要 Python。工具不会安装依赖、驱动或自启。
+使用完整项目目录或解压后的预览包。需要已安装的 **64 位 AutoHotkey v2.0.19+**；不以管理员运行。构建配置需要 Python 3.9+，运行预览包内已生成配置不需要 Python。工具不会安装依赖或驱动，也不会自己设置开机启动（可在托盘手动开启，见下文）。
 
 从源码修改配置后，在项目根目录的普通 PowerShell 中先执行（预览包未修改时可跳过这组 Python 命令）。`py` 启动器不一定存在，`python`/`python3` 也可能只是 Microsoft Store 占位程序；先用 `python --version` 确认，不行就换成实际解释器的完整路径，例如 `C:\ProgramData\anaconda3\python.exe`：
 
@@ -35,7 +35,9 @@ powershell -NoProfile -File .\tools\smoke-tests.ps1 -AutoHotkeyPath $ahk -Regist
 
 首次启动为 **Native Mode**。鼠标查看托盘 **Status...**，释放全部修饰键后选择 **Enable mappings**。配置错误时不应启用。白名单不识别浏览器内部游戏、远程网页或密码输入场景；不确定时手动 Native。
 
-映射“不生效”时先打开 **Status...**，看 **Last mapped-chord decision**：它只在内存里保留最近一次判定的固定原因，例如“keyboard layout … is not allowed”或“VS Code setup not confirmed”，不记录按键、窗口标题或剪贴板。要测映射，前台窗口需处于“英语(美国) - 美式键盘”（ENG）或微软拼音（“中”“英”均可）。如果想让中文输入恢复整窗透传，从 `config/apps.yaml` 的 `allowed_hkls` 删掉 `08040804`，再重新生成配置。
+**开机启动（可选，默认关闭）：**在托盘选 **Start at Windows sign-in (Native Mode)**，会在当前用户的“启动”文件夹放一个 `MacFlow.lnk`，以后登录时自动启动。启动后仍是 Native Mode，要手动 Enable。再选一次即关闭。快捷方式记录的是当前这份副本的 AutoHotkey 和脚本路径：只在要长期保留的那份副本里开启，删除那份副本前先关闭。项目文件夹移动后，从新位置启动 MacFlow，再选一次即可更新。Windows 设置“启动应用”里的开关只会禁用、不会删除这个快捷方式，托盘仍显示为勾选；要彻底关闭，请用托盘或删除快捷方式。这个选项不写注册表、不建计划任务、不以管理员运行。
+
+映射“不生效”时先打开 **Status...**，看 **Last mapped-chord decision**：它只在内存里保留最近一次判定的原因，例如“keyboard layout … is not allowed”或“VS Code setup not confirmed”。原因来自固定模板，最多带上进程名或布局代码，不记录按键、窗口标题或剪贴板。要测映射，前台窗口需处于“英语(美国) - 美式键盘”（ENG）或微软拼音（“中”“英”均可）。如果想让中文输入恢复整窗透传，从 `config/apps.yaml` 的 `allowed_hkls` 删掉 `08040804`，重新生成配置，然后从托盘 Quit 并重新启动（配置只在启动时加载）。
 
 VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscode/README.md)，备份并合并快捷键/设置、检查专用组合冲突；再选择 **Confirm VS Code setup for this run...**，最后手动 Enable。不要覆盖已有配置或在未安装桥接时确认。
 
@@ -43,7 +45,7 @@ VS Code 每次启动默认不映射。先阅读[集成说明](integrations/vscod
 
 鼠标选择托盘 **Native Mode (disable mappings)** 或 **Quit MacFlow**。Ctrl+Alt+F12 是补充停用入口。无响应时在任务管理器按 PID、路径和命令行仅结束本次 MacFlow 进程，不结束其他 AHK 脚本。必要时使用独立原生设备/鼠标重启。
 
-检查 Ctrl+C、Win+E/L、Alt+Tab。无法恢复或卡键时停止试用，按[恢复说明](docs/rollback.md)处理并记 FAIL。VS Code 持久配置仅响应专用组合；卸载按集成说明只撤销自身增量，保留个人后续修改。默认没有自启、驱动或注册表映射。
+检查 Ctrl+C、Win+E/L、Alt+Tab。无法恢复或卡键时停止试用，按[恢复说明](docs/rollback.md)处理并记 FAIL。VS Code 持久配置仅响应专用组合；卸载按集成说明只撤销自身增量，保留个人后续修改。默认没有自启、驱动或注册表映射。如果开过开机启动，卸载前先在托盘关闭，或删除 `shell:startup` 里的 `MacFlow.lnk`。
 
 ## 配置与验收
 
@@ -73,4 +75,4 @@ config/*.yaml 是严格 JSON 子集，修改后重新校验生成；不要手改
 
 普通配置检查成功仅表示配置有效；工具不会自动提升交付状态或生成硬件 PASS。单元测试的模拟 PASS 仅验证判定逻辑。真机证据必须含设备、环境、commit、操作者和实际结果。
 
-真机结果先记到 `tests/evidence/`，不要在测试机上直接改 `config/release.yaml`：运行时会校验它的哈希，改动后在重新生成之前会拒绝启用。只在开发机上集成时更新它，并立即重新生成。
+真机结果先记到 `tests/evidence/`，不要在测试机上直接改 `config/release.yaml`：运行时在启动时校验它的哈希，改动后、重新生成之前，下次启动会拒绝加载配置。只在开发机上集成时更新它，并立即重新生成。

@@ -61,7 +61,12 @@ MF_ForegroundSafe(hwnd, &reason := "") {
         ; updates that input thread while the top-level thread can keep a stale
         ; layout (seen 2026-10-23: frame 08040804, editor 04090409). Only the
         ; input thread's layout therefore decides.
-        focus := MF_FocusWindow(threadId)
+        if !MF_FocusWindow(threadId, &focus) {
+            ; A failed query is not "no focus window": the input thread, and so
+            ; its layout, is unknown. Never fall back to the top-level thread.
+            reason := "focus window unavailable"
+            return false
+        }
         inputThread := focus ? DllCall("User32\GetWindowThreadProcessId", "Ptr", focus, "Ptr", 0, "UInt") : threadId
         if !inputThread {
             ; Thread 0 would read this script's own layout, so treat it as unknown.
@@ -91,13 +96,16 @@ MF_ThreadLayout(threadId) {
     return Format("{:08X}", DllCall("User32\GetKeyboardLayout", "UInt", threadId, "UPtr") & 0xFFFFFFFF)
 }
 
-; GUITHREADINFO.hwndFocus of the foreground thread's input queue, or 0.
-MF_FocusWindow(threadId) {
+; focus receives GUITHREADINFO.hwndFocus of the thread's input queue, which is 0
+; when the queue has no focus window. Returns false when the query itself fails.
+MF_FocusWindow(threadId, &focus) {
+    focus := 0
     info := Buffer(A_PtrSize = 8 ? 72 : 48, 0)
     NumPut("UInt", info.Size, info)
     if !DllCall("User32\GetGUIThreadInfo", "UInt", threadId, "Ptr", info)
-        return 0
-    return NumGet(info, A_PtrSize = 8 ? 16 : 12, "Ptr")
+        return false
+    focus := NumGet(info, A_PtrSize = 8 ? 16 : 12, "Ptr")
+    return true
 }
 
 MF_ProcessNotElevated(pid) {

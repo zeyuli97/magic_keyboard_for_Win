@@ -167,18 +167,10 @@ MF_SendTap(keys) {
     ; Complete chords only; held synthetic Alt is managed explicitly elsewhere.
     if !MF.Enabled
         return false
-    if MF.HasOwnProp("DispatchHwnd") && MF.DispatchHwnd && WinExist("A") != MF.DispatchHwnd {
-        MF_NoteDecision("Not sent: foreground changed")
-        return false
-    }
-    reason := "no foreground window"
-    hwnd := WinExist("A")
-    if !hwnd || !MF_ForegroundSafe(hwnd, &reason) {
-        MF_NoteDecision("Not sent: " reason)
-        MF_ResetInput()
-        return false
-    }
-    if !MF.Enabled || WinExist("A") != hwnd
+    ; The dispatch window, when there is one, is the only target; reading the
+    ; foreground once avoids a second read that could name another window.
+    hwnd := MF.HasOwnProp("DispatchHwnd") && MF.DispatchHwnd ? MF.DispatchHwnd : WinExist("A")
+    if !MF_SendTargetSafe(hwnd)
         return false
     SendLevel(0)
     ; A physical Option chord leaves Alt logically down. Send releases it for the
@@ -188,11 +180,42 @@ MF_SendTap(keys) {
     ; non-modifier key while Alt is still down, before the output and after the
     ; restore, breaks those patterns. Hypothesis fix, NOT hardware-verified.
     altGuard := GetKeyState("LAlt", "P")
-    if altGuard
+    ; Shift has the same pattern when the output has no Shift (Command+Shift+Z
+    ; sends Ctrl+Y): Send releases the held Shift and restores it, and an IME
+    ; may read the restored Shift and the user's release as a lone Shift tap,
+    ; which switches Pinyin between Chinese and English. Same hypothesis guard.
+    shiftGuard := !InStr(keys, "+") && (GetKeyState("LShift", "P") || GetKeyState("RShift", "P"))
+    if altGuard {
         SendEvent("{Blind}{vkE8}")
+        ; The guard is a send of its own, with its own key delay, so the window,
+        ; mode or layout may have changed meanwhile. Nothing is output yet:
+        ; repeat the final checks and consume the chord if one fails.
+        if !MF_SendTargetSafe(hwnd)
+            return false
+    }
     SendEvent(keys)
-    if altGuard && GetKeyState("LAlt")
+    ; Complete the guard only in the window that received the output.
+    if WinExist("A") = hwnd && (altGuard && GetKeyState("LAlt") || shiftGuard && GetKeyState("Shift"))
         SendEvent("{Blind}{vkE8}")
+    return true
+}
+
+; Final checks right before output: mappings are still enabled, and hwnd is
+; still the foreground window with a safe layout and integrity.
+MF_SendTargetSafe(hwnd) {
+    global MF
+    reason := "no foreground window"
+    if !hwnd || !MF_ForegroundSafe(hwnd, &reason) {
+        MF_NoteDecision("Not sent: " reason)
+        MF_ResetInput()
+        return false
+    }
+    if !MF.Enabled
+        return false
+    if WinExist("A") != hwnd {
+        MF_NoteDecision("Not sent: foreground changed")
+        return false
+    }
     return true
 }
 

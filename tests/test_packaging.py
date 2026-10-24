@@ -53,6 +53,23 @@ class PackagingTests(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(original[0])) as archive:
             self.assertNotIn("MacFlow/src/private-notes.txt", archive.namelist())
 
+    def test_unstaged_runtime_or_tool_source_is_refused(self):
+        # Left on disk but out of the index, a file would silently miss the archive.
+        for name in ("src/ahk/router.ahk", "src/ahk/emergency.ahk", "tools/macflow_config.py"):
+            with self.subTest(name=name):
+                self.git("rm", "--cached", "-q", name)
+                try:
+                    with self.assertRaisesRegex(packager.PackageError, name):
+                        packager.build_package(self.root)
+                finally:
+                    self.git("add", name)
+
+    def test_every_static_include_of_main_is_required(self):
+        source = (ROOT / "src/ahk/main.ahk").read_text(encoding="utf-8")
+        includes = {"src/ahk/" + name for name in packager.INCLUDE.findall(source)}
+        self.assertEqual(source.count("#Include"), len(includes))
+        self.assertTrue(includes <= packager._required(ROOT))
+
     def test_indexed_symlink_is_rejected(self):
         # Index mode is sufficient, even on Windows without symlink privilege.
         blob = self.git("hash-object", "-w", "README.md").stdout.decode("ascii").strip()

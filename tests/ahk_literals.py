@@ -6,8 +6,15 @@ Unsupported table syntax fails explicitly instead of silently dropping values.
 import re
 
 
-def tokens(source):
+def tokens(source, starts=None):
+    """Return (kind, value) tokens; starts, if given, receives each token's offset."""
     result = []
+
+    def emit(kind, value, begin):
+        result.append((kind, value))
+        if starts is not None:
+            starts.append(begin)
+
     index = 0
     while index < len(source):
         char = source[index]
@@ -25,7 +32,7 @@ def tokens(source):
             index = end + 2
             continue
         if char in "\"'":
-            quote, value = char, ""
+            begin, quote, value = index, char, ""
             index += 1
             while index < len(source) and source[index] != quote:
                 if source[index] == chr(96):
@@ -36,25 +43,25 @@ def tokens(source):
                 index += 1
             if index >= len(source):
                 raise AssertionError("Unterminated source string")
-            result.append(("string", value))
+            emit("string", value, begin)
             index += 1
             continue
         match = re.match(r"[A-Za-z_][A-Za-z_0-9]*", source[index:])
         if match:
-            result.append(("name", match.group()))
+            emit("name", match.group(), index)
             index += len(match.group())
             continue
         match = re.match(r"[0-9]+", source[index:])
         if match:
-            result.append(("number", match.group()))
+            emit("number", match.group(), index)
             index += len(match.group())
             continue
         operator = next((op for op in (":=", "!=", "==", "&&", "||") if source.startswith(op, index)), None)
         if operator:
-            result.append(("symbol", operator))
+            emit("symbol", operator, index)
             index += len(operator)
         else:
-            result.append(("symbol", char))
+            emit("symbol", char, index)
             index += 1
     return result
 
@@ -75,15 +82,24 @@ def _end(items, start, opening, closing):
 
 
 def function_tokens(source, name):
-    items = tokens(source)
+    # A definition's name is the first token on its line. A call can also be
+    # followed by a brace, as in `if !Name(...) {`, and a commented-out copy
+    # yields no tokens at all; neither may be taken for the definition.
+    starts = []
+    items = tokens(source, starts)
+    bodies = []
     for index, item in enumerate(items[:-2]):
         if item != ("name", name) or items[index + 1][1] != "(":
+            continue
+        if source[source.rfind("\n", 0, starts[index]) + 1:starts[index]].strip():
             continue
         args_end = _end(items, index + 1, "(", ")")
         if args_end + 1 < len(items) and items[args_end + 1][1] == "{":
             body_end = _end(items, args_end + 1, "{", "}")
-            return items[args_end + 2:body_end]
-    raise AssertionError("Missing source function: " + name)
+            bodies.append(items[args_end + 2:body_end])
+    if len(bodies) != 1:
+        raise AssertionError(("Duplicate" if bodies else "Missing") + " source function: " + name)
+    return bodies[0]
 
 
 class LiteralReader:

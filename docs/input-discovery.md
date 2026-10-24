@@ -30,7 +30,7 @@
 
 ### 2026-10-23 本地部分结果（PARTIAL，非验收）
 
-来源：`tests/evidence/local/2026-10-23-windows-native/` 下的 `usb-command-discovery.json` 与 `enabled-bypass-diagnosis.json`。用户报告经 USB 连接，型号和 ANSI/ISO/JIS 未记录，其他连接设备未记录。
+来源：`tests/evidence/local/2026-10-23-windows-native/` 下的 `usb-command-discovery.json`、`enabled-bypass-diagnosis.json` 与 `usb-fn-globe-probe.json`。用户报告经 USB 连接，型号和 ANSI/ISO/JIS 未记录，其他连接设备未记录。
 
 | 项目 | 观察 | 方法与限制 |
 | --- | --- | --- |
@@ -38,7 +38,10 @@
 | 左 Command | VK 0x5B（LWin），SC 0x05B，extended，down/up 成对 | inspect-keys 截图，无重映射器运行 |
 | 右 Command | VK 0x5C（RWin），SC 0x05C，extended，down/up 成对 | 同上 |
 | 左 Option | Windows 修饰键状态为 LAlt | 12 秒 GetAsyncKeyState 面板；非扫描码或设备归属证明 |
-| 右 Option、Control、Shift、Fn | 未探测 | 仍为 NOT TESTED / UNKNOWN |
+| 左 Shift | VK 0xA0（LShift），SC 0x02A，down/up 成对，来自 `VID_05AC PID_0320` | 2026-10-23 只读探测的对照键（低层钩子与 Raw Input 一致） |
+| Fn/地球键（左下角） | **Windows 收不到任何信号**：低层钩子、Raw Input 键盘、Consumer 页、Apple 厂商页 0xFF00 都没有事件 | 同一次探测，Shift 对照正常；USB 连接。用户态程序（含 MacFlow）无法使用这个键，要识别只能装驱动，项目禁止 |
+| 顶排音量加 🔊 | 发送 **F12**（VK 0x7B，SC 0x058），不是音量键 | 同一次探测；fn 加顶排键是否切换成媒体功能未测 |
+| 右 Option、Control、右 Shift | 未探测 | 仍为 NOT TESTED / UNKNOWN |
 | 输入法 | en-US `0409:00000409` 与微软拼音 zh-Hans-CN | 系统语言列表；未自定义切换热键，按 Windows 默认 Left Alt+Shift |
 
 只将非文本的修饰键观察结果和环境元数据复制到测试报告。发现布局既不是 US English `04090409`，也不是简体中文 `08040804`（本机为微软拼音）时应旁路，不能为了“让测试通过”放宽布局白名单。若左右 Command 与合同假设不符，保持 Native 并向 Lead 提交接口变更建议，不临时更改物理 Ctrl/右 Command 行为。
