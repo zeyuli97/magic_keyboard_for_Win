@@ -35,7 +35,7 @@ jobs:
       - name: Test module-path removal and Windows PowerShell autoload
         shell: pwsh
         run: ./tests/test-ci-module-path.ps1
-      - name: Verify restricted token creation and elevated-token rejection (no AHK)
+      - name: Verify restricted token, elevated rejection and child exit code (no AHK)
         shell: pwsh
         run: ./tools/ci-run-ahk.ps1 -TokenTest
       - name: Download pinned AHK and verify both SHA256 hashes

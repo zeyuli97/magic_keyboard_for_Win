@@ -3,7 +3,7 @@
   "autohotkey_runtime_bundled": false,
   "delivery_status": "DEVELOPMENT PREVIEW",
   "files": {
-    ".github/workflows/static-checks.yml": "18209d13ef87914f571f44d3b85bbf270d9a1a966fe95aa45b94baedeb7e0fa6",
+    ".github/workflows/static-checks.yml": "a126d2f768c3e6a7bdae6830b8d02b0b6fbd55dd62a46e4d6182375e87291390",
     "AGENTS.md": "eb5b1192cb18868a451f412f2ab0bdaa3e2c3f617ca9e3a394ce4ab95a6f9fcb",
     "PLAN.md": "bb0055447af55053b63ca1fac22ba827932d6f61ca8050549253f91dddf8c0b7",
     "README.en.md": "09817cd020fc865942d6f42366a1fdbf73d977a1a75526ade8827c5760a79415",
@@ -57,7 +57,7 @@
     "tests/test_spec.py": "982c86a01c25a9eee3a45454b407993b4177c71fa4cb186c7225b05f90edea60",
     "tests/test_startup_option.py": "43cebb5cd750ebdce6a4e2c6daeb88c57297e4d1f6e66711a4c05fae56893b4b",
     "tools/ci-clear-module-path.ps1": "33761006b1f2eaace5824e3ff911defd337d6d9c0c502699828a3e18de87b036",
-    "tools/ci-run-ahk.ps1": "06bf21583209a1fe20692684edaae75ac148a774358a7c97696a3002d28f5d8d",
+    "tools/ci-run-ahk.ps1": "9538d9ffd4190b7f53a7816955c19cdfb6e13ab26b2c2f4dc9eb609ceadb8ff7",
     "tools/generate-config.py": "3f0d95244309c6a4d5f917d988e3c31ff79fdb2a362d1a7cee6e1b19d85d8e64",
     "tools/inspect-keys.ps1": "d2e02b2b2bcd4af22841e4c03f73b084783a5ea0b0bd2f42eb7622c3159a4a25",
     "tools/macflow_config.py": "984f1bc6b981fefb5ae6952a8f8240cda776d316746148dedef13da9ceef8a04",
@@ -68,6 +68,6 @@
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "40e567b1f9b3c6bbef87b54608917cc26f9028646a281aab14e6c0f863456805",
+  "sha256": "ae7166f11f097c33268607517730a86d712041957a026f0c072753be8352c916",
   "storage": "ZIP_STORED"
 }
