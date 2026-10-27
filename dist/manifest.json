@@ -57,7 +57,7 @@
     "tests/test_spec.py": "982c86a01c25a9eee3a45454b407993b4177c71fa4cb186c7225b05f90edea60",
     "tests/test_startup_option.py": "43cebb5cd750ebdce6a4e2c6daeb88c57297e4d1f6e66711a4c05fae56893b4b",
     "tools/ci-clear-module-path.ps1": "33761006b1f2eaace5824e3ff911defd337d6d9c0c502699828a3e18de87b036",
-    "tools/ci-run-ahk.ps1": "00676bf7db4918bcbc830e6acaa3fea0fb06c7587c740dd730596ba86941a88c",
+    "tools/ci-run-ahk.ps1": "06bf21583209a1fe20692684edaae75ac148a774358a7c97696a3002d28f5d8d",
     "tools/generate-config.py": "3f0d95244309c6a4d5f917d988e3c31ff79fdb2a362d1a7cee6e1b19d85d8e64",
     "tools/inspect-keys.ps1": "d2e02b2b2bcd4af22841e4c03f73b084783a5ea0b0bd2f42eb7622c3159a4a25",
     "tools/macflow_config.py": "984f1bc6b981fefb5ae6952a8f8240cda776d316746148dedef13da9ceef8a04",
@@ -68,6 +68,6 @@
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "2ceedf0125dcb6aa2f24bfe7a71bf42dc4ad1616158618fd119bdc150d88c060",
+  "sha256": "40e567b1f9b3c6bbef87b54608917cc26f9028646a281aab14e6c0f863456805",
   "storage": "ZIP_STORED"
 }

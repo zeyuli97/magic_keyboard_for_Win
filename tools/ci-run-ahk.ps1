@@ -50,7 +50,7 @@ try {
     # https://learn.microsoft.com/windows/win32/api/winsafer/nf-winsafer-safercreatelevel
     # https://learn.microsoft.com/windows/win32/api/winsafer/nf-winsafer-safercomputetokenfromlevel
     # https://learn.microsoft.com/windows/win32/api/securitybaseapi/nf-securitybaseapi-createrestrictedtoken
-    # https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessasuserw
+    # https://learn.microsoft.com/windows/win32/api/winbase/nf-winbase-createprocesswithtokenw
     # https://learn.microsoft.com/windows/win32/api/securitybaseapi/nf-securitybaseapi-checktokenmembership
     Add-Type -TypeDefinition @'
 using System;
@@ -65,6 +65,7 @@ public static class MacFlowCiRestrictedRunner
     const uint PrimaryAccess = 0x008B; // query, duplicate, assign-primary, adjust-default
     const uint WaitObject0 = 0, WaitTimeout = 258;
     const uint CreateSuspended = 4, StartfUseStdHandles = 0x100;
+    const uint CreateUnicodeEnvironment = 0x400, CreateNoWindow = 0x08000000;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     struct StartupInfo
@@ -108,6 +109,8 @@ public static class MacFlowCiRestrictedRunner
     }
 
     [DllImport("kernel32.dll")] static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr GetEnvironmentStringsW();
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] static extern bool FreeEnvironmentStringsW(IntPtr environment);
     [DllImport("kernel32.dll", SetLastError = true)] static extern bool CloseHandle(IntPtr handle);
     [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr GetStdHandle(int handle);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern IntPtr CreateFileW(string name, uint access, uint share, ref SecurityAttributes attributes, uint disposition, uint flags, IntPtr template);
@@ -139,8 +142,7 @@ public static class MacFlowCiRestrictedRunner
     [DllImport("advapi32.dll")] static extern IntPtr GetSidSubAuthorityCount(IntPtr sid);
     [DllImport("advapi32.dll")] static extern IntPtr GetSidSubAuthority(IntPtr sid, uint index);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern bool CreateProcessAsUserW(IntPtr token, string application, StringBuilder commandLine,
-        IntPtr processAttributes, IntPtr threadAttributes, bool inheritHandles, uint flags,
+    static extern bool CreateProcessWithTokenW(IntPtr token, uint logonFlags, string application, StringBuilder commandLine, uint flags,
         IntPtr environment, string directory, ref StartupInfo startup, out ProcessInfo process);
 
     static void Check(bool success, string operation)
@@ -302,6 +304,7 @@ public static class MacFlowCiRestrictedRunner
     {
         IntPtr original = IntPtr.Zero;
         IntPtr primary = IntPtr.Zero, childToken = IntPtr.Zero, job = IntPtr.Zero;
+        IntPtr environment = IntPtr.Zero;
         StartupInfo startup = new StartupInfo();
         ProcessInfo child = new ProcessInfo();
         try
@@ -320,8 +323,17 @@ public static class MacFlowCiRestrictedRunner
             startup.hStdOutput = InheritStandardHandle(-11);
             startup.hStdError = InheritStandardHandle(-12);
             StringBuilder command = new StringBuilder("\"" + executable + "\" " + arguments);
-            Check(CreateProcessAsUserW(primary, executable, command, IntPtr.Zero, IntPtr.Zero,
-                true, CreateSuspended, IntPtr.Zero, directory, ref startup, out child), "Create restricted smoke process");
+            if (command.Length >= 1024) throw new InvalidOperationException("CI smoke command exceeds the token-launch API limit.");
+            // The hosted administrator has SeImpersonatePrivilege, but does not
+            // have all privileges required by CreateProcessAsUserW (error 1314).
+            // Use the verified token directly; zero logon flags never reuse the
+            // caller's administrator token or request alternate credentials.
+            // Pass the current environment explicitly, after PSModulePath removal.
+            environment = GetEnvironmentStringsW();
+            Check(environment != IntPtr.Zero, "Copy CI environment");
+            Check(CreateProcessWithTokenW(primary, 0, executable, command,
+                CreateSuspended | CreateUnicodeEnvironment | CreateNoWindow, environment, directory, ref startup, out child),
+                "Create restricted smoke process");
             Check(AssignProcessToJobObject(job, child.Process), "Assign restricted smoke process to cleanup job");
             Check(OpenProcessToken(child.Process, TokenQuery | TokenDuplicate, out childToken), "Inspect suspended child token");
             VerifyStandardToken(childToken);
@@ -354,6 +366,7 @@ public static class MacFlowCiRestrictedRunner
             Close(ref child.Thread); Close(ref child.Process); Close(ref childToken);
             Close(ref startup.hStdInput); Close(ref startup.hStdOutput); Close(ref startup.hStdError);
             Close(ref primary); Close(ref original);
+            if (environment != IntPtr.Zero) FreeEnvironmentStringsW(environment);
         }
     }
 }
@@ -370,7 +383,7 @@ public static class MacFlowCiRestrictedRunner
     # execution-policy override, alternate account or elevation verb is involved.
     $ChildArguments = '-NoLogo -NoProfile -NonInteractive -File "' + $SmokeScript +
         '" -AutoHotkeyPath "' + $AutoHotkeyPath + '" -RegistrationTest'
-    # The raw CreateProcessAsUserW child inherits this pwsh environment, whose
+    # The raw token-launched child receives this pwsh environment, whose
     # PSModulePath puts PowerShell 7 modules first. Windows PowerShell would then
     # fail to autoload Microsoft.PowerShell.Management/Utility. Without the
     # variable it rebuilds its own default path at startup:
