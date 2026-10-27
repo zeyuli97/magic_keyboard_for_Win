@@ -125,10 +125,16 @@ public static class MacFlowCiRestrictedRunner
         IntPtr sidsToDisable, uint deletePrivilegeCount, IntPtr privilegesToDelete,
         uint restrictedSidCount, IntPtr sidsToRestrict, out IntPtr restricted);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool DuplicateTokenEx(IntPtr token, uint access, IntPtr attributes, int impersonationLevel, int tokenType, out IntPtr duplicate);
+    [DllImport("advapi32.dll", EntryPoint = "DuplicateTokenEx", SetLastError = true)]
+    static extern bool DuplicateTokenWithSecurity(IntPtr token, uint access, ref SecurityAttributes attributes,
+        int impersonationLevel, int tokenType, out IntPtr duplicate);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool GetTokenInformation(IntPtr token, int infoClass, IntPtr info, uint size, out uint needed);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SetTokenInformation(IntPtr token, int infoClass, ref SidAndAttributes info, uint size);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool CheckTokenMembership(IntPtr token, IntPtr sid, out bool member);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool ConvertStringSidToSidW(string value, out IntPtr sid);
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool ConvertSidToStringSidW(IntPtr sid, out IntPtr value);
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool ConvertStringSecurityDescriptorToSecurityDescriptorW(string value, uint revision, out IntPtr descriptor, out uint size);
     [DllImport("advapi32.dll")] static extern bool IsValidSid(IntPtr sid);
     [DllImport("advapi32.dll")] static extern uint GetLengthSid(IntPtr sid);
     [DllImport("advapi32.dll")] static extern IntPtr GetSidSubAuthorityCount(IntPtr sid);
@@ -215,6 +221,7 @@ public static class MacFlowCiRestrictedRunner
     static IntPtr CreateStandardPrimaryToken(IntPtr original)
     {
         IntPtr lua = IntPtr.Zero, primary = IntPtr.Zero;
+        IntPtr userInfo = IntPtr.Zero, userSid = IntPtr.Zero, descriptor = IntPtr.Zero;
         try
         {
             // Restrict the caller's own primary token directly. LUA filtering
@@ -224,7 +231,24 @@ public static class MacFlowCiRestrictedRunner
             Check(CreateRestrictedToken(original, DisableMaxPrivilege | LuaToken,
                 0, IntPtr.Zero, 0, IntPtr.Zero, 0, IntPtr.Zero, out lua), "Create restricted LUA token");
             if (lua == IntPtr.Zero) throw new InvalidOperationException("LUA conversion returned no restricted token.");
-            Check(DuplicateTokenEx(lua, PrimaryAccess, IntPtr.Zero, 2, 1, out primary), "Duplicate restricted primary token");
+            // TokenIntegrityLevel governs the token's holder, not access to the
+            // token object itself. A token copied by the elevated CI parent can
+            // otherwise keep an admin-only/high-integrity object descriptor;
+            // the medium-integrity child then cannot duplicate its own token
+            // when CreateProcess launches AHK. Give only this restricted copy
+            // an explicit current-user/System DACL and medium object label.
+            userInfo = ReadTokenInfo(original, 1); // TokenUser
+            Check(ConvertSidToStringSidW(Marshal.ReadIntPtr(userInfo), out userSid), "Read CI user SID");
+            string owner = Marshal.PtrToStringUni(userSid);
+            uint size;
+            Check(ConvertStringSecurityDescriptorToSecurityDescriptorW(
+                "D:(A;;GA;;;SY)(A;;GA;;;" + owner + ")S:(ML;;NW;;;ME)", 1, out descriptor, out size),
+                "Create restricted token object security");
+            SecurityAttributes attributes = new SecurityAttributes();
+            attributes.Length = (uint)Marshal.SizeOf(typeof(SecurityAttributes));
+            attributes.Descriptor = descriptor;
+            attributes.Inherit = false;
+            Check(DuplicateTokenWithSecurity(lua, PrimaryAccess, ref attributes, 2, 1, out primary), "Duplicate restricted primary token");
             LowerToMedium(primary);
             VerifyStandardToken(primary);
             IntPtr result = primary;
@@ -234,6 +258,9 @@ public static class MacFlowCiRestrictedRunner
         finally
         {
             Close(ref primary); Close(ref lua);
+            if (descriptor != IntPtr.Zero) LocalFree(descriptor);
+            if (userSid != IntPtr.Zero) LocalFree(userSid);
+            if (userInfo != IntPtr.Zero) Marshal.FreeHGlobal(userInfo);
         }
     }
     public static void TestTokenCreation()

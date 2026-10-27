@@ -4,6 +4,27 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -cne 'true' -or $PSVersionTable.PSEdition -ne 'Desktop') {
     throw 'This probe requires the CI launcher and Windows PowerShell.'
 }
+Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+public static class MacFlowCiChildTokenProbe
+{
+    [DllImport("kernel32.dll")] static extern IntPtr GetCurrentProcess();
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+    [DllImport("advapi32.dll", SetLastError = true)]
+    static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+    public static void Check()
+    {
+        IntPtr token;
+        if (!OpenProcessToken(GetCurrentProcess(), 0x000A, out token)) // query + duplicate
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Restricted child cannot query/duplicate its own token.");
+        CloseHandle(token);
+        Console.WriteLine("PASS: restricted child can query and duplicate its own token.");
+    }
+}
+'@
+[MacFlowCiChildTokenProbe]::Check()
 $Info = [Diagnostics.ProcessStartInfo]::new()
 $Info.FileName = Join-Path $PSHOME 'powershell.exe'
 $Info.Arguments = '-NoLogo -NoProfile -NonInteractive -Command "[Console]::Out.WriteLine(''CI_NESTED_OUT''); [Console]::Error.WriteLine(''CI_NESTED_ERR''); exit 19"'
