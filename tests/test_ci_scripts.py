@@ -59,6 +59,15 @@ class CiLauncherTests(unittest.TestCase):
         self.assertIn("ConvertTo-Json -InputObject", code)
         self.assertIn("exit $ExitCode", code)
 
+    def test_windows_ci_exercises_token_regression_before_launching_ahk(self):
+        workflow = (ROOT / ".github/workflows/static-checks.yml").read_text(encoding="utf-8")
+        windows = workflow[workflow.index("  windows-runtime:"):]
+        steps = re.split(r"(?m)^      - ", windows)
+        matched = [step for step in steps if "run: ./tools/ci-run-ahk.ps1 -TokenTest" in step]
+        self.assertEqual(1, len(matched))
+        self.assertRegex(matched[0], r"(?m)^        shell: pwsh\s*$")
+        self.assertLess(windows.index("-TokenTest"), windows.index("./tools/prepare-ci-ahk.ps1"))
+
 
 if __name__ == "__main__":
     unittest.main()

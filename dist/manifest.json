@@ -3,7 +3,7 @@
   "autohotkey_runtime_bundled": false,
   "delivery_status": "DEVELOPMENT PREVIEW",
   "files": {
-    ".github/workflows/static-checks.yml": "f10c5e78f74e82c3a7e61619197c63d36a653a6739c33216d1dc5fa15d01da50",
+    ".github/workflows/static-checks.yml": "a126d2f768c3e6a7bdae6830b8d02b0b6fbd55dd62a46e4d6182375e87291390",
     "AGENTS.md": "eb5b1192cb18868a451f412f2ab0bdaa3e2c3f617ca9e3a394ce4ab95a6f9fcb",
     "PLAN.md": "bb0055447af55053b63ca1fac22ba827932d6f61ca8050549253f91dddf8c0b7",
     "README.en.md": "09817cd020fc865942d6f42366a1fdbf73d977a1a75526ade8827c5760a79415",
@@ -40,6 +40,7 @@
     "src/controller/README.md": "cf3c761bb0fcdc623308a70d8a3cee7865651035fb86dee7247285d88ad7e953",
     "src/kanata/README.md": "85d98fb6aa2f116fe8369c9eab70847278779d940d07f6d723f386ef88c3ecea",
     "tests/ahk_literals.py": "979f6fe24860f77e0e825a7955be149063fe6e4bd7d5e08c431d55b71f55653c",
+    "tests/ci-child-process.ps1": "8d2abd7e0bcf5e345d92be5caebc868e3286b9c1214ee067da6a18571396998c",
     "tests/evidence/README.md": "6cc0e45c42b4c5660e60d5644f61e8b1fd77298b9c42950ac99f1e27c2ca91bf",
     "tests/fixtures/minimal_bundle.json": "197ae85c210a2f00806c8dbf49fb722c6f6927b4e5bbbc075eb35ea90f66e560",
     "tests/fixtures/schema.json": "e2f925bf5edbb841c503f7e76d3cf4b12f5d6ce9205b0d8ba34d2a6d13c8f08d",
@@ -48,7 +49,7 @@
     "tests/test-ci-module-path.ps1": "d0bcb40ef9a06256031c59dfe82a7ac71876565883ecf3aef5b1ed1d20d50fbf",
     "tests/test_ahk_literals.py": "f12ec593a0f64dbaa50f8984292e1c18c3039b9a327a8da02504bc245cfde034",
     "tests/test_bridge.py": "d7f59095a94e64df013236b11376fd54a35e47e45570819de230366e5d4dc650",
-    "tests/test_ci_scripts.py": "600c6948384b02b5d037f965fdaaef72360f87a8b2965977ef9866d9edc5582a",
+    "tests/test_ci_scripts.py": "7835161d955669c251975c9dc1dd76f5038624192911f10ada452ddec487348b",
     "tests/test_config.py": "afcdd93dea3504ce00bdb710f22a6440ccdd9f29110b126eb7ccd968371eb8e1",
     "tests/test_generation.py": "4a5c780160247a0ab219c7c76ca95327f82c4993492c7451ef8c206bad8f3f48",
     "tests/test_input_guard.py": "ab0cd5519be9aacbf38819ae131e2901448dae59c41ec576eea2d0033a0cc752",
@@ -57,7 +58,7 @@
     "tests/test_spec.py": "982c86a01c25a9eee3a45454b407993b4177c71fa4cb186c7225b05f90edea60",
     "tests/test_startup_option.py": "43cebb5cd750ebdce6a4e2c6daeb88c57297e4d1f6e66711a4c05fae56893b4b",
     "tools/ci-clear-module-path.ps1": "33761006b1f2eaace5824e3ff911defd337d6d9c0c502699828a3e18de87b036",
-    "tools/ci-run-ahk.ps1": "de2e42a2af5b17cc0bab78821a21f3ff2f6798a0e2f09460571df56c4b0abdd0",
+    "tools/ci-run-ahk.ps1": "10ee9b16bd89229adb10fa27cd5ea80c2d71230927650f02cc5ce1a2a1c26e9f",
     "tools/generate-config.py": "3f0d95244309c6a4d5f917d988e3c31ff79fdb2a362d1a7cee6e1b19d85d8e64",
     "tools/inspect-keys.ps1": "d2e02b2b2bcd4af22841e4c03f73b084783a5ea0b0bd2f42eb7622c3159a4a25",
     "tools/macflow_config.py": "984f1bc6b981fefb5ae6952a8f8240cda776d316746148dedef13da9ceef8a04",
@@ -68,6 +69,6 @@
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "280801646ad6c80220c5bee5e29df2917c1778396f20de1e7e436266181d0b78",
+  "sha256": "543426c516e7ca800d93549523399cd68881cbea8c53d94faf88062e8f75c469",
   "storage": "ZIP_STORED"
 }
