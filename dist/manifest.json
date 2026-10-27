@@ -40,7 +40,7 @@
     "src/controller/README.md": "cf3c761bb0fcdc623308a70d8a3cee7865651035fb86dee7247285d88ad7e953",
     "src/kanata/README.md": "85d98fb6aa2f116fe8369c9eab70847278779d940d07f6d723f386ef88c3ecea",
     "tests/ahk_literals.py": "979f6fe24860f77e0e825a7955be149063fe6e4bd7d5e08c431d55b71f55653c",
-    "tests/ci-child-process.ps1": "21b21c00b027e5600a298a8cbd01dd381eea54b281f23b17d6af2b83c62e12e9",
+    "tests/ci-child-process.ps1": "8d2abd7e0bcf5e345d92be5caebc868e3286b9c1214ee067da6a18571396998c",
     "tests/evidence/README.md": "6cc0e45c42b4c5660e60d5644f61e8b1fd77298b9c42950ac99f1e27c2ca91bf",
     "tests/fixtures/minimal_bundle.json": "197ae85c210a2f00806c8dbf49fb722c6f6927b4e5bbbc075eb35ea90f66e560",
     "tests/fixtures/schema.json": "e2f925bf5edbb841c503f7e76d3cf4b12f5d6ce9205b0d8ba34d2a6d13c8f08d",
@@ -58,7 +58,7 @@
     "tests/test_spec.py": "982c86a01c25a9eee3a45454b407993b4177c71fa4cb186c7225b05f90edea60",
     "tests/test_startup_option.py": "43cebb5cd750ebdce6a4e2c6daeb88c57297e4d1f6e66711a4c05fae56893b4b",
     "tools/ci-clear-module-path.ps1": "33761006b1f2eaace5824e3ff911defd337d6d9c0c502699828a3e18de87b036",
-    "tools/ci-run-ahk.ps1": "64f348a0a117a5a6b13fb0810ed102344621e989cbcccf150d09c8413c79d472",
+    "tools/ci-run-ahk.ps1": "10ee9b16bd89229adb10fa27cd5ea80c2d71230927650f02cc5ce1a2a1c26e9f",
     "tools/generate-config.py": "3f0d95244309c6a4d5f917d988e3c31ff79fdb2a362d1a7cee6e1b19d85d8e64",
     "tools/inspect-keys.ps1": "d2e02b2b2bcd4af22841e4c03f73b084783a5ea0b0bd2f42eb7622c3159a4a25",
     "tools/macflow_config.py": "984f1bc6b981fefb5ae6952a8f8240cda776d316746148dedef13da9ceef8a04",
@@ -69,6 +69,6 @@
   },
   "format_version": 1,
   "hardware_validation": "NOT TESTED",
-  "sha256": "1d4f337b750e00283998bb5a812f0619ccfc607f870a791c94cf99f5e0c9c2a6",
+  "sha256": "543426c516e7ca800d93549523399cd68881cbea8c53d94faf88062e8f75c469",
   "storage": "ZIP_STORED"
 }

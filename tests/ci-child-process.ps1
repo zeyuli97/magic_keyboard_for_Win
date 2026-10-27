@@ -12,6 +12,8 @@ public static class MacFlowCiChildTokenProbe
 {
     [DllImport("kernel32.dll")] static extern IntPtr GetCurrentProcess();
     [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool CreatePipe(out IntPtr read, out IntPtr write, IntPtr attributes, uint size);
     [DllImport("advapi32.dll", SetLastError = true)]
     static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
     public static void Check()
@@ -21,6 +23,11 @@ public static class MacFlowCiChildTokenProbe
             throw new Win32Exception(Marshal.GetLastWin32Error(), "Restricted child cannot query/duplicate its own token.");
         CloseHandle(token);
         Console.WriteLine("PASS: restricted child can query and duplicate its own token.");
+        IntPtr read, write;
+        if (!CreatePipe(out read, out write, IntPtr.Zero, 0))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Restricted child cannot create a pipe with its default DACL.");
+        CloseHandle(read); CloseHandle(write);
+        Console.WriteLine("PASS: restricted default DACL permits anonymous output pipes.");
     }
 }
 '@

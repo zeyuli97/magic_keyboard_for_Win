@@ -130,6 +130,10 @@ public static class MacFlowCiRestrictedRunner
         int impersonationLevel, int tokenType, out IntPtr duplicate);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool GetTokenInformation(IntPtr token, int infoClass, IntPtr info, uint size, out uint needed);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SetTokenInformation(IntPtr token, int infoClass, ref SidAndAttributes info, uint size);
+    [DllImport("advapi32.dll", EntryPoint = "SetTokenInformation", SetLastError = true)]
+    static extern bool SetTokenDefaultDacl(IntPtr token, int infoClass, ref IntPtr acl, uint size);
+    [DllImport("advapi32.dll", SetLastError = true)]
+    static extern bool GetSecurityDescriptorDacl(IntPtr descriptor, out bool present, out IntPtr acl, out bool defaulted);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool CheckTokenMembership(IntPtr token, IntPtr sid, out bool member);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool ConvertStringSidToSidW(string value, out IntPtr sid);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] static extern bool ConvertSidToStringSidW(IntPtr sid, out IntPtr value);
@@ -249,6 +253,16 @@ public static class MacFlowCiRestrictedRunner
             attributes.Descriptor = descriptor;
             attributes.Inherit = false;
             Check(DuplicateTokenWithSecurity(lua, PrimaryAccess, ref attributes, 2, 1, out primary), "Duplicate restricted primary token");
+            // New objects also need a usable default DACL. On the hosted admin
+            // token, an Administrators-only default survives LUA filtering.
+            // CreatePipe then denies the filtered caller access to its own pipe,
+            // so .NET Process.Start fails when redirecting AHK's output.
+            // https://learn.microsoft.com/windows/win32/ipc/anonymous-pipe-security-and-access-rights
+            bool present, defaulted;
+            IntPtr defaultDacl;
+            Check(GetSecurityDescriptorDacl(descriptor, out present, out defaultDacl, out defaulted), "Read restricted default DACL");
+            if (!present || defaultDacl == IntPtr.Zero) throw new InvalidOperationException("Restricted default DACL must not be null.");
+            Check(SetTokenDefaultDacl(primary, 6, ref defaultDacl, (uint)IntPtr.Size), "Set restricted token default DACL");
             LowerToMedium(primary);
             VerifyStandardToken(primary);
             IntPtr result = primary;
