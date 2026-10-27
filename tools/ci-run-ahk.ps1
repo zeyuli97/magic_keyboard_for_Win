@@ -1,7 +1,9 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Smoke')]
 param(
-    [Parameter(Mandatory = $true)]
-    [string] $AutoHotkeyPath
+    [Parameter(Mandatory = $true, ParameterSetName = 'Smoke')]
+    [string] $AutoHotkeyPath,
+    [Parameter(Mandatory = $true, ParameterSetName = 'TokenTest')]
+    [switch] $TokenTest
 )
 # CI helper only. It lowers a new process token; it never changes UAC, accounts,
 # registry, security policy, autorun, or the runtime's administrator rejection.
@@ -21,20 +23,22 @@ if (-not [Environment]::Is64BitProcess) {
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $SmokeScript = Join-Path $PSScriptRoot 'smoke-tests.ps1'
 try {
-    if (-not (Test-Path -LiteralPath $AutoHotkeyPath -PathType Leaf)) {
-        throw 'Supply the existing 64-bit AutoHotkey executable; this helper installs nothing.'
+    if (-not $TokenTest) {
+        if (-not (Test-Path -LiteralPath $AutoHotkeyPath -PathType Leaf)) {
+            throw 'Supply the existing 64-bit AutoHotkey executable; this helper installs nothing.'
+        }
+        if (-not (Test-Path -LiteralPath $SmokeScript -PathType Leaf)) {
+            throw 'Missing tools/smoke-tests.ps1.'
+        }
+        $AutoHotkeyPath = (Resolve-Path -LiteralPath $AutoHotkeyPath).Path
     }
-    if (-not (Test-Path -LiteralPath $SmokeScript -PathType Leaf)) {
-        throw 'Missing tools/smoke-tests.ps1.'
-    }
-    $AutoHotkeyPath = (Resolve-Path -LiteralPath $AutoHotkeyPath).Path
     $Identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     try {
         $Principal = [Security.Principal.WindowsPrincipal]::new($Identity)
         $IsAdministrator = $Principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     }
     finally { $Identity.Dispose() }
-    if (-not $IsAdministrator) {
+    if (-not $IsAdministrator -and -not $TokenTest) {
         # The existing smoke script owns the 15-second timeout for each AHK run.
         & $SmokeScript -AutoHotkeyPath $AutoHotkeyPath -RegistrationTest
         exit $LASTEXITCODE
@@ -45,6 +49,7 @@ try {
     # Official API contracts:
     # https://learn.microsoft.com/windows/win32/api/winsafer/nf-winsafer-safercreatelevel
     # https://learn.microsoft.com/windows/win32/api/winsafer/nf-winsafer-safercomputetokenfromlevel
+    # https://learn.microsoft.com/windows/win32/api/securitybaseapi/nf-securitybaseapi-createrestrictedtoken
     # https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessasuserw
     # https://learn.microsoft.com/windows/win32/api/securitybaseapi/nf-securitybaseapi-checktokenmembership
     Add-Type -TypeDefinition @'
@@ -56,6 +61,7 @@ using System.Text;
 public static class MacFlowCiRestrictedRunner
 {
     const uint TokenQuery = 0x0008, TokenDuplicate = 0x0002;
+    const uint DisableMaxPrivilege = 0x1, LuaToken = 0x4;
     const uint PrimaryAccess = 0x008B; // query, duplicate, assign-primary, adjust-default
     const uint WaitObject0 = 0, WaitTimeout = 258;
     const uint CreateSuspended = 4, StartfUseStdHandles = 0x100;
@@ -119,6 +125,10 @@ public static class MacFlowCiRestrictedRunner
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SaferCreateLevel(uint scope, uint level, uint flags, out IntPtr handle, IntPtr reserved);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SaferComputeTokenFromLevel(IntPtr level, IntPtr input, out IntPtr output, uint flags, IntPtr reserved);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SaferCloseLevel(IntPtr level);
+    [DllImport("advapi32.dll", SetLastError = true)]
+    static extern bool CreateRestrictedToken(IntPtr existing, uint flags, uint disableSidCount,
+        IntPtr sidsToDisable, uint deletePrivilegeCount, IntPtr privilegesToDelete,
+        uint restrictedSidCount, IntPtr sidsToRestrict, out IntPtr restricted);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool DuplicateTokenEx(IntPtr token, uint access, IntPtr attributes, int impersonationLevel, int tokenType, out IntPtr duplicate);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool GetTokenInformation(IntPtr token, int infoClass, IntPtr info, uint size, out uint needed);
     [DllImport("advapi32.dll", SetLastError = true)] static extern bool SetTokenInformation(IntPtr token, int infoClass, ref SidAndAttributes info, uint size);
@@ -207,6 +217,70 @@ public static class MacFlowCiRestrictedRunner
         }
         finally { Close(ref impersonation); if (adminSid != IntPtr.Zero) LocalFree(adminSid); }
     }
+    static IntPtr CreateStandardPrimaryToken(IntPtr original)
+    {
+        IntPtr level = IntPtr.Zero, safer = IntPtr.Zero, lua = IntPtr.Zero, primary = IntPtr.Zero;
+        try
+        {
+            Check(SaferCreateLevel(2, 0x20000, 1, out level, IntPtr.Zero), "Create SAFER normal-user level");
+            Check(SaferComputeTokenFromLevel(level, original, out safer, 0, IntPtr.Zero), "Compute SAFER restricted token");
+            if (safer == IntPtr.Zero) throw new InvalidOperationException("SAFER returned no restricted token.");
+            // SAFER's group/privilege restrictions alone leave TokenElevation set
+            // on the UAC-disabled hosted runner. Explicitly create a LUA token as
+            // well; lowering integrity alone does not remove that elevation state.
+            // No SANDBOX_INERT flag: AppLocker/SRP checks remain in force.
+            Check(CreateRestrictedToken(safer, DisableMaxPrivilege | LuaToken,
+                0, IntPtr.Zero, 0, IntPtr.Zero, 0, IntPtr.Zero, out lua), "Create restricted LUA token");
+            if (lua == IntPtr.Zero) throw new InvalidOperationException("LUA conversion returned no restricted token.");
+            Check(DuplicateTokenEx(lua, PrimaryAccess, IntPtr.Zero, 2, 1, out primary), "Duplicate restricted primary token");
+            LowerToMedium(primary);
+            VerifyStandardToken(primary);
+            IntPtr result = primary;
+            primary = IntPtr.Zero; // Ownership passes to the caller only after verification.
+            return result;
+        }
+        finally
+        {
+            Close(ref primary); Close(ref lua); Close(ref safer);
+            if (level != IntPtr.Zero) SaferCloseLevel(level);
+        }
+    }
+    public static void TestTokenCreation()
+    {
+        // Exercise the real Win32 path without launching AHK or sending input.
+        IntPtr original = IntPtr.Zero, restricted = IntPtr.Zero, elevation = IntPtr.Zero;
+        try
+        {
+            Check(OpenProcessToken(GetCurrentProcess(), TokenQuery | TokenDuplicate, out original), "Open regression token");
+            elevation = ReadTokenInfo(original, 20);
+            bool elevated = Marshal.ReadInt32(elevation) != 0;
+            if (elevated)
+            {
+                bool rejected = false;
+                try { VerifyStandardToken(original); }
+                catch (InvalidOperationException error)
+                {
+                    if (error.Message != "Child token is still elevated; refusing to launch AHK.") throw;
+                    rejected = true;
+                }
+                if (!rejected) throw new InvalidOperationException("Regression: elevated caller was accepted.");
+                Console.WriteLine("PASS: elevated caller token rejected before launch.");
+            }
+            else
+            {
+                VerifyStandardToken(original);
+                Console.WriteLine("Standard-user caller: elevated-token negative case not exercised.");
+            }
+            restricted = CreateStandardPrimaryToken(original);
+            VerifyStandardToken(restricted);
+            Console.WriteLine("PASS: restricted LUA token is non-elevated, medium integrity, and not an administrator. No process launched.");
+        }
+        finally
+        {
+            if (elevation != IntPtr.Zero) Marshal.FreeHGlobal(elevation);
+            Close(ref restricted); Close(ref original);
+        }
+    }
     static IntPtr NullInput()
     {
         SecurityAttributes attributes = new SecurityAttributes();
@@ -226,19 +300,14 @@ public static class MacFlowCiRestrictedRunner
     }
     public static int Run(string executable, string arguments, string directory)
     {
-        IntPtr original = IntPtr.Zero, level = IntPtr.Zero, safer = IntPtr.Zero;
+        IntPtr original = IntPtr.Zero;
         IntPtr primary = IntPtr.Zero, childToken = IntPtr.Zero, job = IntPtr.Zero;
         StartupInfo startup = new StartupInfo();
         ProcessInfo child = new ProcessInfo();
         try
         {
             Check(OpenProcessToken(GetCurrentProcess(), TokenQuery | TokenDuplicate, out original), "Open caller primary token");
-            Check(SaferCreateLevel(2, 0x20000, 1, out level, IntPtr.Zero), "Create SAFER normal-user level");
-            Check(SaferComputeTokenFromLevel(level, original, out safer, 0, IntPtr.Zero), "Compute SAFER restricted token");
-            if (safer == IntPtr.Zero) throw new InvalidOperationException("SAFER returned no restricted token.");
-            Check(DuplicateTokenEx(safer, PrimaryAccess, IntPtr.Zero, 2, 1, out primary), "Duplicate restricted primary token");
-            LowerToMedium(primary);
-            VerifyStandardToken(primary);
+            primary = CreateStandardPrimaryToken(original);
 
             job = CreateJobObjectW(IntPtr.Zero, null);
             Check(job != IntPtr.Zero, "Create isolated CI process job");
@@ -284,12 +353,15 @@ public static class MacFlowCiRestrictedRunner
             Close(ref job); // All descendants belong to this job; never kills other AHK instances.
             Close(ref child.Thread); Close(ref child.Process); Close(ref childToken);
             Close(ref startup.hStdInput); Close(ref startup.hStdOutput); Close(ref startup.hStdError);
-            Close(ref primary); Close(ref safer); Close(ref original);
-            if (level != IntPtr.Zero) SaferCloseLevel(level);
+            Close(ref primary); Close(ref original);
         }
     }
 }
 '@
+    if ($TokenTest) {
+        [MacFlowCiRestrictedRunner]::TestTokenCreation()
+        exit 0
+    }
     $WindowsPowerShell = Join-Path ([Environment]::SystemDirectory) 'WindowsPowerShell\v1.0\powershell.exe'
     if (-not (Test-Path -LiteralPath $WindowsPowerShell -PathType Leaf)) {
         throw 'System Windows PowerShell is unavailable.'
