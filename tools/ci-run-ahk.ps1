@@ -361,7 +361,9 @@ public static class MacFlowCiRestrictedRunner
     if ($TokenTest) {
         # Exercise the same suspended-child verification, output handles, cleanup,
         # and nonzero exit-code propagation without launching AHK or sending keys.
-        $ChildArguments = '-NoLogo -NoProfile -NonInteractive -Command "Write-Output CI_TOKEN_CHILD_OK; exit 37"'
+        $ProbeScript = Join-Path $ProjectRoot 'tests\ci-child-process.ps1'
+        if (-not (Test-Path -LiteralPath $ProbeScript -PathType Leaf)) { throw 'Missing CI child-process regression.' }
+        $ChildArguments = '-NoLogo -NoProfile -NonInteractive -File "' + $ProbeScript + '"'
     }
     else {
         $ChildArguments = '-NoLogo -NoProfile -NonInteractive -File "' + $SmokeScript +

@@ -33,5 +33,20 @@ finally { $Archive.Dispose() }
 if ((Get-FileHash -LiteralPath $RuntimePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $RuntimeSha256) {
     throw 'Extracted AHK runtime checksum mismatch; no executable will run.'
 }
+# The hosted runner downloads as an administrator, then tests with a filtered
+# token. Give that same user explicit read/execute access to this unique test
+# directory and its files, without relying on the Administrators group.
+# This never changes the runner's parent directories or machine security policy.
+$RuntimeAcl = Get-Acl -LiteralPath $TaskDirectory
+$RuntimeReader = [Security.Principal.WindowsIdentity]::GetCurrent()
+try {
+    $ReadExecute = [Security.AccessControl.FileSystemAccessRule]::new(
+        $RuntimeReader.User, [Security.AccessControl.FileSystemRights]::ReadAndExecute,
+        [Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit',
+        [Security.AccessControl.PropagationFlags]::None, [Security.AccessControl.AccessControlType]::Allow)
+    [void]$RuntimeAcl.AddAccessRule($ReadExecute)
+    Set-Acl -LiteralPath $TaskDirectory -AclObject $RuntimeAcl
+}
+finally { $RuntimeReader.Dispose() }
 "path=$RuntimePath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 Write-Output 'AHK 2.0.19 archive and executable hashes verified. No executable has been run by this setup step.'
