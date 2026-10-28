@@ -29,9 +29,14 @@
         "excel",
         "powerpoint",
         "onenote",
-        "outlook_classic"
+        "outlook_classic",
+        "discord",
+        "teams",
+        "whatsapp",
+        "github_desktop",
+        "cursor"
       ],
-      "acceptance": "Every GLOBAL action in every declared supported app context; no unexpected system action. New Outlook: edit in an unsent test draft; Command+F must open mail search via Ctrl+E, never forward. Compare Command+S with native Ctrl+S; automatic draft saving alone is not evidence. Edge/WeChat/Office: compare native shortcuts in temporary editable content; classic Outlook find sends F4 inside an open mail item. No message sending; absent native actions are not a shortcut PASS.",
+      "acceptance": "Every GLOBAL action in every declared supported app context; no unexpected system action. New Outlook: edit in an unsent test draft; Command+F must open mail search via Ctrl+E, never forward. Compare Command+S with native Ctrl+S; automatic draft saving alone is not evidence. Edge/WeChat/Office: compare native shortcuts in temporary editable content; classic Outlook find sends F4 inside an open mail item. No message sending; absent native actions are not a shortcut PASS. Discord/Teams/WhatsApp/GitHub Desktop: basic editing only, no Save mapping; unsent drafts or a disposable repository description, never send/commit/push. Find and redo follow native availability; absent native actions are not a PASS.",
       "hardware_status": "NOT TESTED"
     },
     {
@@ -85,9 +90,14 @@
         "excel",
         "powerpoint",
         "onenote",
-        "outlook_classic"
+        "outlook_classic",
+        "discord",
+        "teams",
+        "whatsapp",
+        "github_desktop",
+        "cursor"
       ],
-      "acceptance": "Word navigation, selection, deletion and line/document navigation without stuck keys. New Outlook: test the draft body and subject against native shortcuts; paragraph navigation is not mapped. Edge/Word/OneNote include paragraph navigation. Excel grid and PowerPoint slide/object contexts follow native Windows behavior and are recorded separately from text editing.",
+      "acceptance": "Word navigation, selection, deletion and line/document navigation without stuck keys. New Outlook: test the draft body and subject against native shortcuts; paragraph navigation is not mapped. Edge/Word/OneNote include paragraph navigation. Excel grid and PowerPoint slide/object contexts follow native Windows behavior and are recorded separately from text editing. Discord/Teams/WhatsApp/GitHub Desktop: compare word/line/document actions in editable text; no paragraph mappings. Cursor uses guarded editor commands only.",
       "hardware_status": "NOT TESTED"
     },
     {
@@ -108,9 +118,10 @@
       "priority": "P0",
       "rules": [],
       "profiles": [
-        "vscode"
+        "vscode",
+        "cursor"
       ],
-      "acceptance": "VS Code focus routing; editor T01/T02 and terminal T03; no shell trigger leakage.",
+      "acceptance": "VS Code and Cursor independently: per-run confirmation must not enable the other editor; editor T01/T02 and selected/unselected terminal copy/paste, all other triggers noop in terminal and non-editor surfaces; no shell trigger leakage; physical Control remains native.",
       "hardware_status": "NOT TESTED"
     },
     {
@@ -184,7 +195,12 @@
         "excel",
         "powerpoint",
         "onenote",
-        "outlook_classic"
+        "outlook_classic",
+        "discord",
+        "teams",
+        "whatsapp",
+        "github_desktop",
+        "cursor"
       ],
       "acceptance": "Held Command application switch, reverse/cancel, foreign modifier during switching and concurrent disable leave no synthetic Alt.",
       "hardware_status": "NOT TESTED"

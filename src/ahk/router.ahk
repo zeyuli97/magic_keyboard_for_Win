@@ -25,8 +25,8 @@ MF_CurrentProfile(&reason := "") {
     for profile in MF.Config.Profiles {
         if !profile.Enabled || !MF_Contains(profile.Processes, process)
             continue
-        if profile.RequiresIntegration && !MF.VscodeReady {
-            reason := "VS Code setup not confirmed for this run"
+        if profile.RequiresIntegration && !MF_IntegrationReady(profile) {
+            reason := (profile.Id = "cursor" ? "Cursor" : "VS Code") " setup not confirmed for this run"
             return 0
         }
         if profile.Id = "explorer" {
@@ -45,6 +45,17 @@ MF_CurrentProfile(&reason := "") {
     }
     reason := "process " process " is not allowlisted"
     return 0
+}
+
+; Each editor requires its own per-run acknowledgement. Unknown integrations
+; cannot inherit another editor's confirmation.
+MF_IntegrationReady(profile) {
+    global MF
+    if profile.Id = "vscode"
+        return MF.VscodeReady
+    if profile.Id = "cursor"
+        return MF.CursorReady
+    return false
 }
 
 MF_ForegroundSafe(hwnd, &reason := "") {

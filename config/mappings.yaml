@@ -8,7 +8,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "copy",
       "priority": 10,
@@ -22,7 +23,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "paste",
       "priority": 10,
@@ -36,7 +38,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "cut",
       "priority": 10,
@@ -50,7 +53,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "select_all",
       "priority": 10,
@@ -63,7 +67,8 @@
       "physical_chord": "LWin+z",
       "contexts": [
         "edit",
-        "vscode"
+        "vscode",
+        "basic_edit"
       ],
       "action": "undo",
       "priority": 10,
@@ -76,7 +81,8 @@
       "physical_chord": "LWin+Shift+z",
       "contexts": [
         "edit",
-        "vscode"
+        "vscode",
+        "basic_edit"
       ],
       "action": "redo",
       "priority": 10,
@@ -102,7 +108,8 @@
       "physical_chord": "LWin+f",
       "contexts": [
         "edit",
-        "vscode"
+        "vscode",
+        "basic_edit"
       ],
       "action": "find",
       "priority": 10,
@@ -281,7 +288,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "app_next",
       "priority": 10,
@@ -295,7 +303,8 @@
       "contexts": [
         "edit",
         "vscode",
-        "explorer"
+        "explorer",
+        "basic_edit"
       ],
       "action": "app_previous",
       "priority": 10,

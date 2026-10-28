@@ -35,7 +35,8 @@
                   "browser",
                   "explorer",
                   "vscode",
-                  "terminal"
+                  "terminal",
+                  "basic_edit"
                 ]
               },
               "uniqueItems": true,
@@ -173,7 +174,12 @@
                 "outlook_classic",
                 "vscode",
                 "explorer",
-                "windows_terminal"
+                "windows_terminal",
+                "discord",
+                "teams",
+                "whatsapp",
+                "github_desktop",
+                "cursor"
               ]
             },
             "processes": {
@@ -196,7 +202,8 @@
                   "browser",
                   "explorer",
                   "vscode",
-                  "terminal"
+                  "terminal",
+                  "basic_edit"
                 ]
               },
               "uniqueItems": true,
@@ -334,4 +341,3 @@
     "additionalProperties": false
   }
 }
-

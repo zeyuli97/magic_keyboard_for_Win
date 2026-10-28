@@ -30,10 +30,10 @@ MF_GlobalAction(action, profile) {
         return true
     }
 
-    ; Code.exe alone cannot identify editor vs terminal focus. Dedicated
+    ; Code.exe / Cursor.exe cannot identify editor vs terminal focus. Dedicated
     ; triggers are interpreted by the manually installed native bindings.
-    if profile.Id = "vscode" {
-        if !MF.VscodeReady
+    if profile.Id = "vscode" || profile.Id = "cursor" {
+        if !MF_IntegrationReady(profile)
             return false
         static bridge := Map(
             "copy", "^!{F13}", "paste", "^!{F14}",
@@ -54,7 +54,7 @@ MF_GlobalAction(action, profile) {
     ; No terminal generic fallback, even if future configuration is mistaken.
     ; Claude, Codex, Visual Studio and Unreal Editor take Notepad's keys; none of
     ; them can tell a built-in terminal panel from the editor (decisions.md #14).
-    static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal|outlook|edge|wechat|word|excel|powerpoint|onenote|outlook_classic", "|")
+    static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal|outlook|edge|wechat|word|excel|powerpoint|onenote|outlook_classic|discord|teams|whatsapp|github_desktop", "|")
     if !MF_Contains(direct, profile.Id)
         return false
     ; Ctrl+Up/Down move by paragraph in RichEdit and Chromium text, like Option+
@@ -82,6 +82,10 @@ MF_GlobalAction(action, profile) {
     ; Explorer's generic subset is intentionally limited to file clipboard and
     ; selection commands. Text navigation/save/find are not inferred from focus.
     if profile.Id = "explorer" && action != "copy" && action != "paste" && action != "cut" && action != "select_all"
+        return false
+    ; Basic editing excludes Save: Teams Ctrl+S can send a meeting request.
+    static basic := StrSplit("discord|teams|whatsapp|github_desktop", "|")
+    if MF_Contains(basic, profile.Id) && action = "save"
         return false
     ; In new Outlook, Ctrl+F forwards mail. Command+F opens mail search instead.
     if profile.Id = "outlook" && action = "find" {

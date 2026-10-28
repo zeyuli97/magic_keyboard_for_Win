@@ -21,7 +21,7 @@ SplitPath(A_ScriptDir, , &MF_SourceDir)
 SplitPath(MF_SourceDir, , &MF_RepoRoot)
 global MF := {
     Enabled: false, Config: 0, ConfigError: "", Root: MF_RepoRoot,
-    VscodeReady: false, OwnedKeys: Map(), SwitcherActive: false,
+    VscodeReady: false, CursorReady: false, OwnedKeys: Map(), SwitcherActive: false,
     SwitchingHwnd: 0, SwitcherStarted: 0, Registered: [],
     SessionRegistered: false, MutexHandle: 0, TrayReady: false,
     LastReason: "Started in Native Mode", ShuttingDown: false,
@@ -141,17 +141,19 @@ MF_RunRegistrationTest() {
     ; Native predicates keep both mappings and emergency callbacks inactive.
     MF.Enabled := false
     MF.VscodeReady := false
+    MF.CursorReady := false
     failure := ""
     try {
         InstallKeybdHook()
         MF_RegisterInputPaths()
-        if MF.Enabled || MF.VscodeReady || MF.SwitcherActive || MF.OwnedKeys.Count
+        if MF.Enabled || MF.VscodeReady || MF.CursorReady || MF.SwitcherActive || MF.OwnedKeys.Count
             throw Error("Registration changed the Native input state.")
     } catch Error as err {
         failure := err.Message
     } finally {
         MF.Enabled := false
         MF.VscodeReady := false
+        MF.CursorReady := false
         ; Disable every registered hotkey, reset the HotIf creation context and
         ; remove the hook. Do not call input-reset or action/send functions.
         try {
@@ -180,6 +182,8 @@ MF_BuildTray() {
     A_TrayMenu.Add()
     A_TrayMenu.Add("Confirm VS Code setup for this run...", MF_ConfirmVscode)
     A_TrayMenu.Add("Revoke VS Code setup confirmation", MF_RevokeVscode)
+    A_TrayMenu.Add("Confirm Cursor setup for this run...", MF_ConfirmCursor)
+    A_TrayMenu.Add("Revoke Cursor setup confirmation", MF_RevokeCursor)
     A_TrayMenu.Add()
     A_TrayMenu.Add("Start at Windows sign-in (Native Mode)", MF_ToggleStartup)
     A_TrayMenu.Add()
@@ -259,6 +263,31 @@ MF_RevokeVscode(*) {
     MF_UpdateTray()
 }
 
+MF_ConfirmCursor(*) {
+    global MF
+    MF_Disable()
+    result := MsgBox("Confirm only after following integrations\cursor\README.md:"
+        . "`n`n- Back up and merge the native keybindings and settings in Cursor."
+        . "`n- Check reserved Ctrl+Alt+F13..F24 and shifted variants for collisions."
+        . "`n- Confirm terminal.integrated.sendKeybindingsToShell is false."
+        . "`n- Check editor focus, terminal selection and no-selection copy behavior."
+        . "`n`nThis is a per-run setup acknowledgement, not a hardware PASS."
+        . "`nVS Code confirmation does not confirm Cursor."
+        . "`nMappings stay Native until you explicitly enable them."
+        . "`n`nIs the documented setup complete?", "MacFlow - Cursor setup", "YesNo Default2 Icon!")
+    MF.CursorReady := result = "Yes"
+    MF.LastReason := MF.CursorReady ? "Cursor setup confirmed for this run; Native Mode" : "Cursor setup not confirmed; Native Mode"
+    MF_UpdateTray()
+}
+
+MF_RevokeCursor(*) {
+    global MF
+    MF_Disable()
+    MF.CursorReady := false
+    MF.LastReason := "Cursor setup confirmation revoked; Native Mode"
+    MF_UpdateTray()
+}
+
 ; Start at sign-in is opt-in: the specification allows it only after the user
 ; chooses it, and the first start stays Native. It is one shortcut in this
 ; user's Startup folder: no registry Run key, scheduled task or service, never
@@ -331,6 +360,13 @@ MF_UpdateTray() {
         A_TrayMenu.Uncheck("Confirm VS Code setup for this run...")
         A_TrayMenu.Disable("Revoke VS Code setup confirmation")
     }
+    if MF.CursorReady {
+        A_TrayMenu.Check("Confirm Cursor setup for this run...")
+        A_TrayMenu.Enable("Revoke Cursor setup confirmation")
+    } else {
+        A_TrayMenu.Uncheck("Confirm Cursor setup for this run...")
+        A_TrayMenu.Disable("Revoke Cursor setup confirmation")
+    }
     ; Cached: rechecked when the tray is built and on every toggle.
     if MF.StartupState = "this"
         A_TrayMenu.Check("Start at Windows sign-in (Native Mode)")
@@ -357,6 +393,7 @@ MF_ShowStatus(*) {
         . "`nStart at Windows sign-in: " (startup = "this" ? "on for this copy, in Native Mode (Windows Startup apps can still disable it)"
             : startup = "other" ? "a MacFlow shortcut starts another copy or a missing path" : "off")
         . "`nVS Code setup acknowledged this run: " (MF.VscodeReady ? "yes" : "no")
+        . "`nCursor setup acknowledged this run: " (MF.CursorReady ? "yes" : "no")
         . "`nConfig hash: " hash
         . "`nLast transition: " MF.LastReason
         . "`nLast mapped-chord decision: " decision

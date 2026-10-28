@@ -76,9 +76,9 @@ MF_LoadConfig(root) {
                 throw Error("Profile context violates the native/terminal boundary.")
         if profile.Id = "windows_terminal" && profile.Enabled
             throw Error("Windows Terminal must bypass in this preview.")
-        if profile.Id = "vscode" && !profile.RequiresIntegration
-            throw Error("VS Code requires its native binding bridge.")
-        if profile.Id != "vscode" && profile.RequiresIntegration
+        if (profile.Id = "vscode" || profile.Id = "cursor") && !profile.RequiresIntegration
+            throw Error("VS Code and Cursor require their native binding bridges.")
+        if profile.Id != "vscode" && profile.Id != "cursor" && profile.RequiresIntegration
             throw Error("Unexpected integration requirement.")
         for process in profile.Processes {
             if !RegExMatch(process, "^[a-z0-9_.-]+\.exe$") || processes.Has(process)
@@ -149,7 +149,7 @@ MF_ConfigActions() {
 }
 
 MF_ConfigContexts() {
-    return StrSplit("edit|text|paragraph|browser|explorer|vscode|terminal", "|")
+    return StrSplit("edit|basic_edit|text|paragraph|browser|explorer|vscode|terminal", "|")
 }
 
 MF_ConfigBlockedActions() {
@@ -180,6 +180,11 @@ MF_ConfigProfilePolicy() {
         "powerpoint", {Process: "powerpnt.exe", Contexts: StrSplit("edit|text", "|")},
         "onenote", {Process: "onenote.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
         "outlook_classic", {Process: "outlook.exe", Contexts: StrSplit("edit|text", "|")},
+        "discord", {Process: "discord.exe", Contexts: StrSplit("basic_edit|text", "|")},
+        "teams", {Process: "ms-teams.exe", Contexts: StrSplit("basic_edit|text", "|")},
+        "whatsapp", {Process: "whatsapp.root.exe", Contexts: StrSplit("basic_edit|text", "|")},
+        "github_desktop", {Process: "githubdesktop.exe", Contexts: StrSplit("basic_edit|text", "|")},
+        "cursor", {Process: "cursor.exe", Contexts: StrSplit("vscode", "|")},
         "vscode", {Process: "code.exe", Contexts: StrSplit("vscode", "|")},
         "explorer", {Process: "explorer.exe", Contexts: StrSplit("explorer", "|")},
         "windows_terminal", {Process: "windowsterminal.exe", Contexts: StrSplit("terminal", "|")})
@@ -201,6 +206,11 @@ MF_ProfileActionPolicy() {
         "powerpoint", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "onenote", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
         "outlook_classic", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "discord", StrSplit("copy|paste|cut|select_all|undo|redo|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "teams", StrSplit("copy|paste|cut|select_all|undo|redo|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "whatsapp", StrSplit("copy|paste|cut|select_all|undo|redo|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "github_desktop", StrSplit("copy|paste|cut|select_all|undo|redo|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "cursor", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "vscode", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "explorer", StrSplit("copy|paste|cut|select_all|explorer_new|app_next|app_previous", "|"),
         "windows_terminal", [])

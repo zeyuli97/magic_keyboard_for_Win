@@ -23,6 +23,10 @@ ADDED_APPS = {
     "outlook_classic": "outlook.exe",
 }
 BROWSER_APPS = {"chrome": "chrome.exe", "edge": "msedge.exe"}
+BASIC_APPS = {
+    "discord": "discord.exe", "teams": "ms-teams.exe",
+    "whatsapp": "whatsapp.root.exe", "github_desktop": "githubdesktop.exe",
+}
 # Option+Up/Down send Ctrl+Up/Down only where that moves by paragraph
 # (2026-10-24, decisions.md #15).
 PARAGRAPH_ACTIONS = frozenset(("paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down"))
@@ -123,7 +127,7 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
         self.assertEqual(PARAGRAPH_PROFILES, {name for name, (_, contexts) in PROFILE_CONTRACTS.items()
                                               if "paragraph" in contexts})
         for profile_id in ("vscode", "visual_studio", "unreal", "outlook", "explorer", "windows_terminal",
-                           "wechat", "excel", "powerpoint", "outlook_classic"):
+                           "wechat", "excel", "powerpoint", "outlook_classic", "cursor", *BASIC_APPS):
             with self.subTest(profile=profile_id):
                 self.assertFalse(PARAGRAPH_ACTIONS & PROFILE_ACTIONS[profile_id])
                 data = copy.deepcopy(self.bundle)
@@ -147,8 +151,8 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
                     validate_bundle(data)
 
     def test_common_apps_cannot_take_over_other_processes(self):
-        for name in ("wechat", "word", "excel", "powerpoint", "onenote", "outlook_classic"):
-            for process in ("cmd.exe", "msedgewebview2.exe", "unlisted.exe"):
+        for name in ("wechat", "word", "excel", "powerpoint", "onenote", "outlook_classic", "cursor", *BASIC_APPS):
+            for process in ("cmd.exe", "msedgewebview2.exe", "unlisted.exe", "update.exe", "ms-teams_modulehost.exe"):
                 for enabled in (True, False):
                     with self.subTest(profile=name, process=process, enabled=enabled):
                         data = copy.deepcopy(self.bundle)
@@ -156,6 +160,33 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
                         profile.update(processes=[process], enabled=enabled)
                         with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
                             validate_bundle(data)
+
+    def test_basic_editing_never_includes_save_or_special_app_actions(self):
+        profiles = {p["id"]: p for p in self.bundle["apps"]["profiles"]}
+        for name, process in BASIC_APPS.items():
+            with self.subTest(profile=name):
+                profile = profiles[name]
+                self.assertEqual([process], profile["processes"])
+                self.assertEqual({"basic_edit", "text"}, set(profile["contexts"]))
+                self.assertTrue(profile["enabled"])
+                self.assertFalse(profile["requires_integration"])
+                reached = {r["action"] for r in self.bundle["mappings"]["mappings"]
+                           if r["enabled"] and set(r["contexts"]) & set(profile["contexts"])}
+                self.assertEqual(PROFILE_ACTIONS["vscode"] - {"save"}, reached)
+                for context in ("edit", "browser", "paragraph", "terminal", "vscode"):
+                    data = copy.deepcopy(self.bundle)
+                    next(p for p in data["apps"]["profiles"] if p["id"] == name)["contexts"].append(context)
+                    with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
+                        validate_bundle(data)
+
+    def test_save_cannot_be_added_to_basic_editing_even_when_app_disabled(self):
+        data = copy.deepcopy(self.bundle)
+        next(r for r in data["mappings"]["mappings"] if r["action"] == "save")["contexts"].append("basic_edit")
+        for p in data["apps"]["profiles"]:
+            if p["id"] in BASIC_APPS:
+                p["enabled"] = False
+        with self.assertRaisesRegex(ConfigError, "does not implement action save"):
+            validate_bundle(data)
 
     def test_outlook_cannot_expand_to_classic_mail_or_shared_webview_host(self):
         for process in ("outlook.exe", "hxoutlook.exe", "msedgewebview2.exe"):
@@ -282,11 +313,19 @@ class ActualHandlerCoverageTests(unittest.TestCase):
             self.assertTrue(contains(body, ["MF_SendTap", "(", variable, "[", "action", "]", ")", "return", "true"]))
         direct = static_list(global_body, "direct")
         self.assertEqual(len(direct), len(set(direct)), "Duplicate direct profile")
-        self.assertEqual({*BROWSER_APPS, "notepad", "explorer", *ADDED_APPS}, set(direct))
+        self.assertEqual({*BROWSER_APPS, "notepad", "explorer", *ADDED_APPS, *BASIC_APPS}, set(direct))
         self.assertTrue(contains(global_body, [
             "if", "!", "MF_Contains", "(", "direct", ",", "profile", ".", "Id", ")", "return", "false",
         ]))
-        self.assertTrue(contains(global_body, ["if", "profile", ".", "Id", "=", "vscode", "{", "if", "!", "MF", ".", "VscodeReady", "return", "false"]))
+        self.assertTrue(contains(global_body, [
+            "if", "profile", ".", "Id", "=", "vscode", "||", "profile", ".", "Id", "=", "cursor", "{",
+            "if", "!", "MF_IntegrationReady", "(", "profile", ")", "return", "false",
+        ]))
+        self.assertEqual(set(BASIC_APPS), set(static_list(global_body, "basic")))
+        self.assertTrue(contains(global_body, [
+            "if", "MF_Contains", "(", "basic", ",", "profile", ".", "Id", ")", "&&",
+            "action", "=", "save", "return", "false",
+        ]))
         self.assertTrue(contains(browser_body, [
             "if", "!", "IsObject", "(", "profile", ")", "||", "(",
             "profile", ".", "Id", "!=", "chrome", "&&", "profile", ".", "Id", "!=", "edge", ")", "return", "false",
@@ -320,6 +359,8 @@ class ActualHandlerCoverageTests(unittest.TestCase):
             **{profile_id: generic | switches | (paragraph if profile_id in PARAGRAPH_PROFILES else set())
                for profile_id in ADDED_APPS},
             "vscode": bridge | switches,
+            "cursor": bridge | switches,
+            **{name: (generic - {"save"}) | switches for name in BASIC_APPS},
             "explorer": explorer_generic | explorer_specific | switches,
             "windows_terminal": set(),
         }

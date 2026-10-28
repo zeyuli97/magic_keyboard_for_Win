@@ -3,6 +3,7 @@ import json
 import re
 import unittest
 from test_config import ROOT
+from ahk_literals import function_tokens, contains
 BINDINGS = ROOT / "integrations/vscode/keybindings.macflow.json"
 
 class BridgeTests(unittest.TestCase):
@@ -40,3 +41,29 @@ class BridgeTests(unittest.TestCase):
         rules = json.loads((ROOT / "config/mappings.yaml").read_text(encoding="utf-8"))["mappings"]
         required = {r["action"] for r in rules if r["enabled"] and "vscode" in r["contexts"]}
         self.assertTrue((required - {"app_next", "app_previous"}).issubset({a for a, _, _ in pairs}))
+
+    def test_cursor_uses_identical_guarded_bindings(self):
+        for name in ("keybindings.macflow.json", "settings.macflow.json"):
+            self.assertEqual((BINDINGS.parent / name).read_bytes(),
+                             (ROOT / "integrations/cursor" / name).read_bytes())
+
+    def test_editor_confirmations_are_independent_and_native_by_default(self):
+        router = (ROOT / "src/ahk/router.ahk").read_text(encoding="utf-8")
+        readiness = function_tokens(router, "MF_IntegrationReady")
+        self.assertTrue(contains(readiness, [
+            "if", "profile", ".", "Id", "=", "vscode", "return", "MF", ".", "VscodeReady",
+            "if", "profile", ".", "Id", "=", "cursor", "return", "MF", ".", "CursorReady",
+            "return", "false",
+        ]))
+        self.assertTrue(contains(function_tokens(router, "MF_CurrentProfile"), [
+            "if", "profile", ".", "RequiresIntegration", "&&", "!", "MF_IntegrationReady", "(", "profile", ")", "{",
+        ]))
+        main = (ROOT / "src/ahk/main.ahk").read_text(encoding="utf-8")
+        self.assertIn("VscodeReady: false, CursorReady: false", main)
+        for name, own, other in (("Vscode", "VscodeReady", "CursorReady"), ("Cursor", "CursorReady", "VscodeReady")):
+            for action in ("Confirm", "Revoke"):
+                body = function_tokens(main, "MF_" + action + name)
+                self.assertTrue(contains(body, ["MF_Disable", "(", ")"]))
+                self.assertTrue(contains(body, ["MF", ".", own, ":="]))
+                self.assertFalse(contains(body, ["MF", ".", other, ":="]))
+                self.assertFalse(contains(body, ["MF", ".", "Enabled", ":=", "true"]))

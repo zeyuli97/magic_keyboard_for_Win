@@ -194,12 +194,15 @@ class ConfigSemanticsTests(unittest.TestCase):
         })
         self.reject()
 
-    def test_vscode_cannot_skip_manual_integration_guard(self):
-        self.data["apps"]["profiles"].append({
-            "id": "vscode", "processes": ["code.exe"], "contexts": ["vscode"],
-            "enabled": True, "requires_integration": False,
-        })
-        self.reject()
+    def test_bridged_editors_cannot_skip_manual_integration_guard(self):
+        for name, process in (("vscode", "code.exe"), ("cursor", "cursor.exe")):
+            with self.subTest(profile=name):
+                self.data = fixture()
+                self.data["apps"]["profiles"].append({
+                    "id": name, "processes": [process], "contexts": ["vscode"],
+                    "enabled": True, "requires_integration": False,
+                })
+                self.reject()
 
 
 class ReleaseGateTests(unittest.TestCase):

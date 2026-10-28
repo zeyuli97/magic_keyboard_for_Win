@@ -33,6 +33,8 @@ Line and word boundaries follow the target application's Windows behavior. Parag
 | Notepad | Common editing, word and paragraph navigation, application switching |
 | Chrome, Edge | Common editing, text navigation, application switching and the browser shortcuts below |
 | VS Code | Editing, text navigation and application switching; requires the [keybinding bridge](integrations/vscode/README.md) |
+| Cursor | Editing, text navigation and application switching; requires the separate [Cursor bridge](integrations/cursor/README.md) and confirmation |
+| Discord, Teams, WhatsApp, GitHub Desktop | Basic editing (excluding ⌘S), find, word, line and document navigation, application switching |
 | Explorer | ⌘C/V/X/A, ⌘⇧N to create a folder, application switching |
 | Claude, Codex | Common editing, word and paragraph navigation, application switching |
 | Visual Studio, Unreal Editor (UE5) | Common editing, word, line and document navigation, application switching |
@@ -48,7 +50,9 @@ New Outlook is matched by `olk.exe`; ⌘F sends Ctrl+E to open mail search. Clas
 
 Office mappings target Windows desktop applications. Excel uses text navigation while editing a cell; in the grid, native Ctrl+arrow keys move to a data-region boundary. PowerPoint text boxes, objects and slide areas also retain their own native meanings. WeChat currently matches `WeChat.exe`, as installed on the test machine; WeCom and versions using other process names are not included. Saving and redoing in apps such as WeChat and OneNote depend on whether the current surface provides the corresponding Ctrl+S / Ctrl+Y action.
 
-⌥↑/↓ keep their native behavior in VS Code and Visual Studio. Explorer's ⌥↑ still goes to the parent folder. Applications outside this list, other keyboard layouts and elevated application windows retain native input.
+Discord, Teams, WhatsApp and GitHub Desktop provide ⌘C/V/X/A/Z/⇧Z; ⌘F sends Ctrl+F. Use text navigation in chat inputs or GitHub Desktop's commit description fields. Read-only lists, diffs and areas without undo/redo follow native application behavior. These four apps exclude ⌘S (Teams Ctrl+S can send a meeting request in some views) and add no send-message, commit or push shortcuts. Their fixed process names are `Discord.exe`, `ms-teams.exe`, `WhatsApp.Root.exe` and `GitHubDesktop.exe`; versions using other names are not included.
+
+⌥↑/↓ keep their native behavior in VS Code, Cursor and Visual Studio. Explorer's ⌥↑ still goes to the parent folder. Applications outside this list, other keyboard layouts and elevated application windows retain native input.
 
 ## Installation and startup
 
@@ -76,7 +80,7 @@ The shortcut depends on the original project and AutoHotkey locations. If you mo
 ### Enable mappings
 
 1. MacFlow starts in **Native Mode** each time, leaving keyboard input unchanged.
-2. Use the mouse to open **Status...** from the tray and confirm `Error: none`. For VS Code, complete the bridge setup and per-run confirmation below first.
+2. Use the mouse to open **Status...** from the tray and confirm `Error: none`. For VS Code or Cursor, complete the respective bridge setup and per-run confirmation below first.
 3. Release all modifier keys, then choose **Enable mappings** from the tray.
 
 Do not run MacFlow as administrator. It does not install drivers or change keyboard registry settings. At runtime it does not access the network or record input or clipboard contents.
@@ -97,6 +101,12 @@ $ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
 Follow the [integration instructions](integrations/vscode/README.md) to back up and merge the keybindings and settings. Each time MacFlow starts, select **Confirm VS Code setup for this run...** from the tray, then **Enable mappings**. VS Code retains native input until that confirmation.
 
 The bridge distinguishes the editor from the integrated terminal: ⌘C copies a terminal selection and sends no Ctrl+C when nothing is selected; ⌘V pastes. Merge the configuration rather than replacing your personal settings.
+
+### Cursor setup
+
+Follow the [Cursor integration instructions](integrations/cursor/README.md) to merge the snippets into Cursor's own keybindings and settings. Each time MacFlow starts, select **Confirm Cursor setup for this run...**, then **Enable mappings**. This confirmation is independent of VS Code; the entire Cursor window retains native input until confirmed.
+
+The bridge uses native editor commands. In the integrated terminal, ⌘C copies a selection and does nothing without one; ⌘V pastes and other bridge editing triggers do nothing. Chat inputs, search boxes, quick-open and other non-editor surfaces currently do not receive these editing mappings.
 
 ### Start at sign-in
 
@@ -133,11 +143,11 @@ Codex is identified by the process name `ChatGPT.exe`, so the ChatGPT desktop ap
 
 Choose **Native Mode (disable mappings)** from the tray to disable mappings, or **Quit MacFlow** to exit. The emergency disable shortcut is **Ctrl+Alt+F12**.
 
-If a mapping does not work, reopen **Status...** and check the mode, error and **Last mapped-chord decision**. Common reasons include an application or layout outside the allowed list, an elevated window, or missing VS Code confirmation. Status is a snapshot taken when opened. The last decision may belong to an earlier action, so check its age.
+If a mapping does not work, reopen **Status...** and check the mode, error and **Last mapped-chord decision**. Common reasons include an application or layout outside the allowed list, an elevated window, or missing confirmation for the relevant VS Code or Cursor bridge. Status is a snapshot taken when opened. The last decision may belong to an earlier action, so check its age.
 
 For stuck keys or an unresponsive process, follow the [recovery instructions](docs/rollback.md). If you use Task Manager, end only the relevant MacFlow process, not other AutoHotkey scripts.
 
-To uninstall, quit MacFlow first. If start at sign-in was enabled, disable it from the tray or remove `MacFlow.lnk` from the Startup folder, then delete the desktop shortcut and project copy. Remove only the MacFlow additions from VS Code as described in the [integration instructions](integrations/vscode/README.md), keeping your personal settings.
+To uninstall, quit MacFlow first. If start at sign-in was enabled, disable it from the tray or remove `MacFlow.lnk` from the Startup folder, then delete the desktop shortcut and project copy. Follow the [VS Code](integrations/vscode/README.md) or [Cursor](integrations/cursor/README.md) integration instructions to remove only the corresponding MacFlow additions, keeping your personal settings.
 
 ## Configuration and development
 

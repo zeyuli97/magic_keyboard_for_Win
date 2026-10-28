@@ -33,6 +33,8 @@
 | Notepad（记事本） | 常用编辑、单词和段落导航、应用切换 |
 | Chrome、Edge | 常用编辑、文本导航、应用切换，以及下列浏览器快捷键 |
 | VS Code | 编辑与文本导航、应用切换；需安装[按键桥接配置](integrations/vscode/README.md) |
+| Cursor | 编辑与文本导航、应用切换；需安装 [Cursor 桥接配置](integrations/cursor/README.md)，并单独确认 |
+| Discord、Teams、WhatsApp、GitHub Desktop | 基础编辑（不含 ⌘S）、查找、单词及行/文档导航、应用切换 |
 | Explorer（文件资源管理器） | ⌘C/V/X/A、⌘⇧N 新建文件夹、应用切换 |
 | Claude、Codex | 常用编辑、单词和段落导航、应用切换 |
 | Visual Studio、Unreal Editor（UE5） | 常用编辑、单词导航、行首/行尾及文档导航、应用切换 |
@@ -48,7 +50,9 @@ Chrome 和 Edge 另提供 ⌘T 新建标签页、⌘W 关闭标签页、⌘R 刷
 
 Office 映射针对 Windows 桌面应用。Excel 在单元格编辑时按文本导航，在表格区则按原生 Ctrl+方向键移动到数据区域边界；PowerPoint 的文本框、对象和幻灯片区也各自使用原生含义。微信目前匹配本机的 `WeChat.exe`，不包含企业微信或使用其他进程名的版本。微信、OneNote 等应用中的保存和重做效果，以当前界面是否提供对应的 Ctrl+S / Ctrl+Y 命令为准。
 
-VS Code 和 Visual Studio 的 ⌥↑/↓ 保留原生行为，Explorer 的 ⌥↑ 仍可返回上一级。未列出的应用、其他键盘布局及管理员权限窗口保持原生输入。
+Discord、Teams、WhatsApp 和 GitHub Desktop 的基础编辑包含 ⌘C/V/X/A/Z/⇧Z，⌘F 发送 Ctrl+F。请在聊天输入框或 GitHub Desktop 的提交说明输入区使用文字导航；只读列表、差异视图及不支持撤销/重做的区域遵循应用原生行为。四者不映射 ⌘S（Teams 的 Ctrl+S 在部分界面会发送会议邀请），也不增加消息发送、提交或推送快捷键。匹配进程分别为 `Discord.exe`、`ms-teams.exe`、`WhatsApp.Root.exe`、`GitHubDesktop.exe`；其他进程名的版本不包含在内。
+
+VS Code、Cursor 和 Visual Studio 的 ⌥↑/↓ 保留原生行为，Explorer 的 ⌥↑ 仍可返回上一级。未列出的应用、其他键盘布局及管理员权限窗口保持原生输入。
 
 ## 安装与启动
 
@@ -76,7 +80,7 @@ VS Code 和 Visual Studio 的 ⌥↑/↓ 保留原生行为，Explorer 的 ⌥�
 ### 启用映射
 
 1. MacFlow 每次启动时处于 **Native Mode**，键盘保持原生行为。
-2. 用鼠标打开托盘 **Status...**，确认 `Error: none`。如需使用 VS Code，先完成下方的桥接配置和本次运行确认。
+2. 用鼠标打开托盘 **Status...**，确认 `Error: none`。如需使用 VS Code 或 Cursor，先完成各自的桥接配置和本次运行确认。
 3. 松开所有修饰键，再从托盘选择 **Enable mappings**。
 
 不要以管理员身份运行。MacFlow 不安装驱动、不修改键盘注册表；运行时不联网，也不记录输入或剪贴板内容。
@@ -97,6 +101,12 @@ $ahk = 'C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe'
 按[集成说明](integrations/vscode/README.md)备份并合并快捷键和设置。每次启动 MacFlow 后，先在托盘选择 **Confirm VS Code setup for this run...**，再选择 **Enable mappings**；确认前，VS Code 保持原生输入。
 
 桥接配置区分编辑器与集成终端：终端有选区时 ⌘C 复制，无选区时不发送 Ctrl+C；⌘V 用于粘贴。请合并配置，不要覆盖已有的个人设置。
+
+### Cursor 配置
+
+按 [Cursor 集成说明](integrations/cursor/README.md)合并到 Cursor 自己的快捷键和设置中。每次启动 MacFlow 后，选择 **Confirm Cursor setup for this run...**，再 **Enable mappings**。它与 VS Code 的确认相互独立；确认前整个 Cursor 窗口保持原生输入。
+
+Cursor 编辑器使用原生编辑命令；集成终端有选区时 ⌘C 复制，无选区时不操作，⌘V 粘贴，其他桥接编辑快捷键不操作。聊天输入框、搜索框、命令面板和其他非编辑区目前不提供这些编辑映射。
 
 ### 开机启动
 
@@ -133,11 +143,11 @@ Codex 的识别进程为 `ChatGPT.exe`，同名的 ChatGPT 桌面应用也会受
 
 托盘选择 **Native Mode (disable mappings)** 可停用映射，**Quit MacFlow** 可退出。紧急停用快捷键为 **Ctrl+Alt+F12**。
 
-映射没有生效时，重新打开 **Status...** 检查模式、错误和 **Last mapped-chord decision**。常见原因包括应用或布局不在允许范围、窗口以管理员运行、VS Code 桥接尚未确认。Status 是打开时的快照；最近一次判定不一定对应刚才的操作，请结合其时间查看。
+映射没有生效时，重新打开 **Status...** 检查模式、错误和 **Last mapped-chord decision**。常见原因包括应用或布局不在允许范围、窗口以管理员运行、VS Code 或 Cursor 对应的桥接尚未确认。Status 是打开时的快照；最近一次判定不一定对应刚才的操作，请结合其时间查看。
 
 出现卡键或无法退出时，按[恢复说明](docs/rollback.md)处理；若需使用任务管理器，只结束本次 MacFlow 进程，不要结束其他 AutoHotkey 脚本。
 
-卸载时先退出 MacFlow。若开启了开机启动，先从托盘关闭或删除“启动”文件夹里的 `MacFlow.lnk`，再删除桌面快捷方式和项目副本。VS Code 的配置按[集成说明](integrations/vscode/README.md)撤销 MacFlow 增量，保留个人设置。
+卸载时先退出 MacFlow。若开启了开机启动，先从托盘关闭或删除“启动”文件夹里的 `MacFlow.lnk`，再删除桌面快捷方式和项目副本。按 [VS Code 集成说明](integrations/vscode/README.md)或 [Cursor 集成说明](integrations/cursor/README.md)撤销对应配置中的 MacFlow 增量，保留个人设置。
 
 ## 修改配置与开发
 

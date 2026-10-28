@@ -14,7 +14,7 @@ class ConfigError(ValueError):
     """A configuration cannot safely be consumed."""
 
 
-CONTEXTS = frozenset(("edit", "text", "paragraph", "browser", "explorer", "vscode", "terminal"))
+CONTEXTS = frozenset(("edit", "basic_edit", "text", "paragraph", "browser", "explorer", "vscode", "terminal"))
 ACTIONS = frozenset((
     "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
     "word_left", "word_right", "select_word_left", "select_word_right",
@@ -133,6 +133,36 @@ PROFILE_ACTIONS = {
         "delete_word", "line_start", "line_end", "document_start", "document_end",
         "app_next", "app_previous",
     )),
+    "discord": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "teams": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "whatsapp": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "github_desktop": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
+    "cursor": frozenset((
+        "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
+        "word_left", "word_right", "select_word_left", "select_word_right",
+        "delete_word", "line_start", "line_end", "document_start", "document_end",
+        "app_next", "app_previous",
+    )),
     "vscode": frozenset((
         "copy", "paste", "cut", "select_all", "undo", "redo", "save", "find",
         "word_left", "word_right", "select_word_left", "select_word_right",
@@ -164,6 +194,11 @@ PROFILE_CONTRACTS = {
     "powerpoint": ("powerpnt.exe", {"edit", "text"}),
     "onenote": ("onenote.exe", {"edit", "text", "paragraph"}),
     "outlook_classic": ("outlook.exe", {"edit", "text"}),
+    "discord": ("discord.exe", {"basic_edit", "text"}),
+    "teams": ("ms-teams.exe", {"basic_edit", "text"}),
+    "whatsapp": ("whatsapp.root.exe", {"basic_edit", "text"}),
+    "github_desktop": ("githubdesktop.exe", {"basic_edit", "text"}),
+    "cursor": ("cursor.exe", {"vscode"}),
     "vscode": ("code.exe", {"vscode"}),
     "explorer": ("explorer.exe", {"explorer"}),
     "windows_terminal": ("windowsterminal.exe", {"terminal"}),
@@ -318,8 +353,8 @@ def validate_bundle(bundle):
         _bool(profile["requires_integration"], path + ".requires_integration")
         if profile["id"] == "windows_terminal" and profile["enabled"]:
             _fail(path, "Windows Terminal profile must remain disabled")
-        if profile["requires_integration"] != (profile["id"] == "vscode"):
-            _fail(path, "only VS Code must require the guarded native integration")
+        if profile["requires_integration"] != (profile["id"] in {"vscode", "cursor"}):
+            _fail(path, "only VS Code and Cursor must require the guarded native integration")
         if processes & active_processes:
             _fail(path, "profile processes overlap")
         active_processes.update(processes)

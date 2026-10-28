@@ -247,3 +247,17 @@ Codex 的审查（根目录 `CODEX-REVIEW-f291682.md`）指出两处问题。两
 | AHK `/validate`、`--self-test`、`--registration-test`（worktree） | 语法通过；两个自检 PASS，无警告 | 新的 ⌥↑/↓ 热键能注册并清理；没有发送输入 |
 
 按用户要求，本节改动已提交并集成到根目录，替换 `771fb64`。运行中的 MacFlow 要从托盘 Quit 后重新启动，才会加载新配置。
+
+## 2026-10-28 Discord / Teams / WhatsApp / Cursor / GitHub Desktop
+
+在 `7094041` 基础上增加五个固定应用 profile。Discord、Teams、WhatsApp、GitHub Desktop 使用不含保存的基础编辑与文本导航；Cursor 使用独立确认的编辑器/终端桥接。原有应用输出、输入防护、Native 启动、VS Code 配置与确认函数、桌面和登录启动逻辑保持不变。
+
+| 检查 | 结果与范围 |
+| --- | --- |
+| 配置验证、生成物核对 | VALID；3 个生成物一致，22 个固定 profile；发布门槛仍为 NOT ACCEPTED |
+| Python unittest | 120 项通过；检查固定进程、上下文和动作边界、禁止 Save 扩展、独立桥接确认、覆盖记录、配置和打包 |
+| Windows AHK 2.0.19 | `/validate`、Native 配置加载、Native 热键注册清理均通过，无警告；未启用映射或发送按键 |
+| 隔离 AHK 处理函数回归 | 与 `7094041` 的旧处理函数对照 2,312 项，17 个原有 profile 输出一致；新增 profile 的 680 项处理/拦截检查通过。发送函数替换为内存记录，没有向应用注入按键 |
+| 原有行为边界 | 旧 profile 配置及可达规则逐项相同；输入、紧急停用、浏览器、Explorer、终端处理、release.yaml 与 VS Code 集成文件字节不变；原有启动/启用/停用/确认/会话清理函数相同 |
+
+以上属于配置、初始化和处理逻辑检查。五个新增应用的真实焦点行为、剪贴板、快捷键冲突和输入法兼容性仍为 **NOT TESTED**，不能据此宣布硬件验收通过。T01/T02/T07d 已纳入全部新增应用，T04 同时要求 VS Code 与 Cursor；没有修改 release.yaml 的状态。
