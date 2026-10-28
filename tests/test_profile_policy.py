@@ -13,15 +13,20 @@ from ahk_literals import (
     action_blocks_with_output,
 )
 
-# Mapped like Notepad at the user's request on 2026-10-23 (decisions.md #14).
+# Additional edit/text profiles; Outlook overrides find with mail search.
 ADDED_APPS = {
     "claude": "claude.exe", "codex": "chatgpt.exe",
     "visual_studio": "devenv.exe", "unreal": "unrealeditor.exe",
+    "outlook": "olk.exe",
+    "wechat": "wechat.exe", "word": "winword.exe", "excel": "excel.exe",
+    "powerpoint": "powerpnt.exe", "onenote": "onenote.exe",
+    "outlook_classic": "outlook.exe",
 }
+BROWSER_APPS = {"chrome": "chrome.exe", "edge": "msedge.exe"}
 # Option+Up/Down send Ctrl+Up/Down only where that moves by paragraph
 # (2026-10-24, decisions.md #15).
 PARAGRAPH_ACTIONS = frozenset(("paragraph_up", "paragraph_down", "select_paragraph_up", "select_paragraph_down"))
-PARAGRAPH_PROFILES = frozenset(("chrome", "notepad", "claude", "codex"))
+PARAGRAPH_PROFILES = frozenset(("chrome", "edge", "notepad", "claude", "codex", "word", "onenote"))
 
 
 class ActualConfigurationCapabilityTests(unittest.TestCase):
@@ -117,13 +122,50 @@ class ActualConfigurationCapabilityTests(unittest.TestCase):
         self.assertEqual(PARAGRAPH_PROFILES, reached)
         self.assertEqual(PARAGRAPH_PROFILES, {name for name, (_, contexts) in PROFILE_CONTRACTS.items()
                                               if "paragraph" in contexts})
-        for profile_id in ("vscode", "visual_studio", "unreal", "explorer", "windows_terminal"):
+        for profile_id in ("vscode", "visual_studio", "unreal", "outlook", "explorer", "windows_terminal",
+                           "wechat", "excel", "powerpoint", "outlook_classic"):
             with self.subTest(profile=profile_id):
                 self.assertFalse(PARAGRAPH_ACTIONS & PROFILE_ACTIONS[profile_id])
                 data = copy.deepcopy(self.bundle)
                 next(p for p in data["apps"]["profiles"] if p["id"] == profile_id)["contexts"].append("paragraph")
                 with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
                     validate_bundle(data)
+
+    def test_edge_has_browser_capabilities_without_shared_webview_access(self):
+        profiles = {row["id"]: row for row in self.bundle["apps"]["profiles"]}
+        self.assertEqual(PROFILE_ACTIONS["chrome"], PROFILE_ACTIONS["edge"])
+        for name, process in BROWSER_APPS.items():
+            with self.subTest(profile=name):
+                profile = profiles[name]
+                self.assertEqual([process], profile["processes"])
+                self.assertEqual({"edit", "text", "paragraph", "browser"}, set(profile["contexts"]))
+                self.assertTrue(profile["enabled"])
+                self.assertFalse(profile["requires_integration"])
+                data = copy.deepcopy(self.bundle)
+                next(p for p in data["apps"]["profiles"] if p["id"] == name)["processes"] = ["msedgewebview2.exe"]
+                with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
+                    validate_bundle(data)
+
+    def test_common_apps_cannot_take_over_other_processes(self):
+        for name in ("wechat", "word", "excel", "powerpoint", "onenote", "outlook_classic"):
+            for process in ("cmd.exe", "msedgewebview2.exe", "unlisted.exe"):
+                for enabled in (True, False):
+                    with self.subTest(profile=name, process=process, enabled=enabled):
+                        data = copy.deepcopy(self.bundle)
+                        profile = next(p for p in data["apps"]["profiles"] if p["id"] == name)
+                        profile.update(processes=[process], enabled=enabled)
+                        with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
+                            validate_bundle(data)
+
+    def test_outlook_cannot_expand_to_classic_mail_or_shared_webview_host(self):
+        for process in ("outlook.exe", "hxoutlook.exe", "msedgewebview2.exe"):
+            for replace in (True, False):
+                with self.subTest(process=process, replace=replace):
+                    data = copy.deepcopy(self.bundle)
+                    profile = next(p for p in data["apps"]["profiles"] if p["id"] == "outlook")
+                    profile["processes"] = [process] if replace else ["olk.exe", process]
+                    with self.assertRaisesRegex(ConfigError, "fixed safety boundary"):
+                        validate_bundle(data)
 
     def test_disabled_unsupported_rule_does_not_claim_a_capability(self):
         data = copy.deepcopy(self.bundle)
@@ -180,6 +222,15 @@ class PythonAhkPolicyParityTests(unittest.TestCase):
         loader = function_tokens(self.source, "MF_LoadConfig")
         self.assertTrue(contains(loader, ["MF_ProfileActionPolicy", "(", ")"]))
 
+    def test_loader_capacity_tracks_fixed_profile_inventory(self):
+        # The expanded config exceeds the old hard-coded 16-profile ceiling.
+        loader = function_tokens(self.source, "MF_LoadConfig")
+        self.assertTrue(contains(loader, [
+            "profilePolicy", ":=", "MF_ConfigProfilePolicy", "(", ")",
+            "profileCount", ":=", "MF_IniInteger", "(", "path", ",", "meta", ",",
+            "profile_count", ",", "1", ",", "profilePolicy", ".", "Count", ")",
+        ]))
+
     def test_schema_enums_match_shared_policy(self):
         rule = self.schema["mappings"]["properties"]["mappings"]["items"]["properties"]
         app = self.schema["apps"]["properties"]
@@ -192,6 +243,18 @@ class PythonAhkPolicyParityTests(unittest.TestCase):
 
 
 class ActualHandlerCoverageTests(unittest.TestCase):
+    def test_outlook_variants_keep_their_distinct_find_outputs(self):
+        body = function_tokens((ROOT / "src/ahk/global.ahk").read_text(encoding="utf-8"), "MF_GlobalAction")
+        # The Outlook-only override must return before the generic Ctrl+F send.
+        self.assertTrue(contains(body, [
+            "if", "profile", ".", "Id", "=", "outlook", "&&", "action", "=", "find", "{",
+            "MF_SendTap", "(", "^e", ")", "return", "true", "}",
+            "if", "profile", ".", "Id", "=", "outlook_classic", "&&", "action", "=", "find", "{",
+            "MF_SendTap", "(", "{F4}", ")", "return", "true", "}",
+            "MF_SendTap", "(", "keys", "[", "action", "]", ")",
+        ]))
+        self.assertEqual("^f", static_map(body, "keys")["find"])
+
     def test_capabilities_are_backed_by_real_dispatch_maps_and_profile_guards(self):
         global_body = function_tokens((ROOT / "src/ahk/global.ahk").read_text(encoding="utf-8"), "MF_GlobalAction")
         browser_body = function_tokens((ROOT / "src/ahk/browser.ahk").read_text(encoding="utf-8"), "MF_BrowserAction")
@@ -219,12 +282,15 @@ class ActualHandlerCoverageTests(unittest.TestCase):
             self.assertTrue(contains(body, ["MF_SendTap", "(", variable, "[", "action", "]", ")", "return", "true"]))
         direct = static_list(global_body, "direct")
         self.assertEqual(len(direct), len(set(direct)), "Duplicate direct profile")
-        self.assertEqual({"chrome", "notepad", "explorer", *ADDED_APPS}, set(direct))
+        self.assertEqual({*BROWSER_APPS, "notepad", "explorer", *ADDED_APPS}, set(direct))
         self.assertTrue(contains(global_body, [
             "if", "!", "MF_Contains", "(", "direct", ",", "profile", ".", "Id", ")", "return", "false",
         ]))
         self.assertTrue(contains(global_body, ["if", "profile", ".", "Id", "=", "vscode", "{", "if", "!", "MF", ".", "VscodeReady", "return", "false"]))
-        self.assertTrue(contains(browser_body, ["profile", ".", "Id", "!=", "chrome", "return", "false"]))
+        self.assertTrue(contains(browser_body, [
+            "if", "!", "IsObject", "(", "profile", ")", "||", "(",
+            "profile", ".", "Id", "!=", "chrome", "&&", "profile", ".", "Id", "!=", "edge", ")", "return", "false",
+        ]))
         self.assertTrue(contains(explorer_body, ["profile", ".", "Id", "!=", "explorer", "return", "false"]))
         self.assertTrue(contains(terminal_body, ["profile", ".", "Id", "!=", "vscode", "||", "!", "MF", ".", "VscodeReady", "return", "false"]))
 
@@ -249,7 +315,7 @@ class ActualHandlerCoverageTests(unittest.TestCase):
         self.assertTrue(contains(global_body, ["MF_SendTap", "(", "action", "=", "app_previous"]))
 
         actual = {
-            "chrome": generic | browser | paragraph | switches,
+            **{name: generic | browser | paragraph | switches for name in BROWSER_APPS},
             "notepad": generic | paragraph | switches,
             **{profile_id: generic | switches | (paragraph if profile_id in PARAGRAPH_PROFILES else set())
                for profile_id in ADDED_APPS},

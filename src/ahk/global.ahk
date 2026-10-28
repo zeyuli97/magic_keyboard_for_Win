@@ -54,7 +54,7 @@ MF_GlobalAction(action, profile) {
     ; No terminal generic fallback, even if future configuration is mistaken.
     ; Claude, Codex, Visual Studio and Unreal Editor take Notepad's keys; none of
     ; them can tell a built-in terminal panel from the editor (decisions.md #14).
-    static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal", "|")
+    static direct := StrSplit("chrome|notepad|explorer|claude|codex|visual_studio|unreal|outlook|edge|wechat|word|excel|powerpoint|onenote|outlook_classic", "|")
     if !MF_Contains(direct, profile.Id)
         return false
     ; Ctrl+Up/Down move by paragraph in RichEdit and Chromium text, like Option+
@@ -83,6 +83,17 @@ MF_GlobalAction(action, profile) {
     ; selection commands. Text navigation/save/find are not inferred from focus.
     if profile.Id = "explorer" && action != "copy" && action != "paste" && action != "cut" && action != "select_all"
         return false
+    ; In new Outlook, Ctrl+F forwards mail. Command+F opens mail search instead.
+    if profile.Id = "outlook" && action = "find" {
+        MF_SendTap("^e")
+        return true
+    }
+    ; Classic Outlook uses F4 to find text in an open mail item. Ctrl+F forwards;
+    ; Ctrl+E centers text when composing, so it is not a generic Find shortcut.
+    if profile.Id = "outlook_classic" && action = "find" {
+        MF_SendTap("{F4}")
+        return true
+    }
     MF_SendTap(keys[action])
     return true
 }

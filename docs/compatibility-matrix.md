@@ -11,6 +11,11 @@
 | ⌥↑/↓ 段落跳转 | 2026-10-24 应用户要求加入：Notepad、Chrome、Claude、Codex 发送 Ctrl+↑/↓（加 ⇧ 选中） | NOT TESTED | 映射前 Notepad 里 ⌥↑/↓ 不动光标，⌥↑ 还会让光标消失（用户报告）；VS Code、Visual Studio 保持原生的移动行，Explorer 保持回上一级，Unreal 不映射；Chrome 未被 T02 覆盖（门槛报 UNCOVERED） |
 | Claude / Codex / Visual Studio / Unreal Editor | 2026-10-23 应用户要求加入，与 Notepad 相同（edit/text） | NOT TESTED | 进程分别为 claude.exe、ChatGPT.exe、devenv.exe、UnrealEditor.exe；自带终端面板同样收到 Ctrl 输出（无选区 ⌘C 会中断命令）；Unreal 视口里 Home/End 是视口命令；超出规格首批范围，待 Lead 确认 |
 | Windows Terminal + PowerShell | BLOCKED | NOT TESTED | 整窗透传；阻止原型验收 |
+| Edge | edit/text/paragraph/browser 与应用切换 | NOT TESTED | 仅 msedge.exe，不包含共享 WebView2；T01/T01b/T02/T07d 覆盖；⌘L 仍关闭 |
+| 微信 | edit/text 与应用切换 | NOT TESTED | 本机 WeChat.exe 3.9.12.1000；只在无敏感内容的未发送输入区测试，保存/重做等以原生命令为准；不包括企业微信和其他进程名 |
+| Word / Excel / PowerPoint / OneNote | edit/text 与应用切换；Word/OneNote 另有 paragraph | NOT TESTED | Windows 桌面版各自固定进程；Excel 单元格编辑与表格导航、PowerPoint 文本与对象/幻灯片分开测；T01/T02/T07d |
+| 经典版 Outlook | edit/text 与应用切换；⌘F 发送 F4 在打开的邮件内查找 | NOT TESTED | 仅 outlook.exe；主窗口邮箱搜索使用原生 Ctrl+E；不把正文 Ctrl+E 居中当作查找；测试草稿不发送 |
+| 新版 Outlook（Windows） | edit/text 映射与应用切换；⌘F 单独发送 Ctrl+E 搜索邮件 | NOT TESTED | 仅 olk.exe；写信文字区与原生快捷键对照，邮件列表等区域使用 Outlook 的原生语义；⌘S 发送 Ctrl+S，不能用自动保存证明映射成功；⌥↑/↓ 未映射；经典 Outlook、旧 Mail、共享 WebView2 进程未加入 |
 | Chrome ⌘L | BLOCKED | NOT TESTED | 不注册；仍可能原生锁屏，Ctrl+L 退路 |
 | Explorer 剪贴板/新文件夹 | 已有代码 | NOT TESTED | 临时样本实测 |
 | Explorer ⌘Backspace | BLOCKED | NOT TESTED | 缺少回收能力判断，关闭 |

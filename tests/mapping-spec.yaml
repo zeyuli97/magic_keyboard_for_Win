@@ -21,9 +21,17 @@
         "claude",
         "codex",
         "visual_studio",
-        "unreal"
+        "unreal",
+        "outlook",
+        "edge",
+        "wechat",
+        "word",
+        "excel",
+        "powerpoint",
+        "onenote",
+        "outlook_classic"
       ],
-      "acceptance": "Every GLOBAL action in every declared supported app context; no unexpected system action.",
+      "acceptance": "Every GLOBAL action in every declared supported app context; no unexpected system action. New Outlook: edit in an unsent test draft; Command+F must open mail search via Ctrl+E, never forward. Compare Command+S with native Ctrl+S; automatic draft saving alone is not evidence. Edge/WeChat/Office: compare native shortcuts in temporary editable content; classic Outlook find sends F4 inside an open mail item. No message sending; absent native actions are not a shortcut PASS.",
       "hardware_status": "NOT TESTED"
     },
     {
@@ -39,7 +47,8 @@
         "browser_address"
       ],
       "profiles": [
-        "chrome"
+        "chrome",
+        "edge"
       ],
       "acceptance": "Browser actions; Command+L must focus address bar without locking for v1.",
       "hardware_status": "NOT TESTED"
@@ -68,9 +77,17 @@
         "claude",
         "codex",
         "visual_studio",
-        "unreal"
+        "unreal",
+        "outlook",
+        "edge",
+        "wechat",
+        "word",
+        "excel",
+        "powerpoint",
+        "onenote",
+        "outlook_classic"
       ],
-      "acceptance": "Word navigation, selection, deletion and line/document navigation without stuck keys.",
+      "acceptance": "Word navigation, selection, deletion and line/document navigation without stuck keys. New Outlook: test the draft body and subject against native shortcuts; paragraph navigation is not mapped. Edge/Word/OneNote include paragraph navigation. Excel grid and PowerPoint slide/object contexts follow native Windows behavior and are recorded separately from text editing.",
       "hardware_status": "NOT TESTED"
     },
     {
@@ -159,7 +176,15 @@
         "claude",
         "codex",
         "visual_studio",
-        "unreal"
+        "unreal",
+        "outlook",
+        "edge",
+        "wechat",
+        "word",
+        "excel",
+        "powerpoint",
+        "onenote",
+        "outlook_classic"
       ],
       "acceptance": "Held Command application switch, reverse/cancel, foreign modifier during switching and concurrent disable leave no synthetic Alt.",
       "hardware_status": "NOT TESTED"

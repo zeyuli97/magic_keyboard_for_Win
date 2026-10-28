@@ -28,7 +28,8 @@ MF_LoadConfig(root) {
         if !RegExMatch(process, "^[a-z0-9_.-]+\.exe$")
             throw Error("Invalid bypass process.")
     ruleCount := MF_IniInteger(path, "meta", "rule_count", 1, 256)
-    profileCount := MF_IniInteger(path, "meta", "profile_count", 1, 16)
+    profilePolicy := MF_ConfigProfilePolicy()
+    profileCount := MF_IniInteger(path, "meta", "profile_count", 1, profilePolicy.Count)
     actions := MF_ConfigActions()
     ids := Map()
     Loop ruleCount {
@@ -58,7 +59,6 @@ MF_LoadConfig(root) {
     }
     processes := Map()
     profileIds := Map()
-    profilePolicy := MF_ConfigProfilePolicy()
     Loop profileCount {
         section := "profile." A_Index
         profile := {Id: MF_Ini(path, section, "id"), Processes: MF_IniList(path, section, "processes"),
@@ -172,6 +172,14 @@ MF_ConfigProfilePolicy() {
         "codex", {Process: "chatgpt.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
         "visual_studio", {Process: "devenv.exe", Contexts: StrSplit("edit|text", "|")},
         "unreal", {Process: "unrealeditor.exe", Contexts: StrSplit("edit|text", "|")},
+        "outlook", {Process: "olk.exe", Contexts: StrSplit("edit|text", "|")},
+        "edge", {Process: "msedge.exe", Contexts: StrSplit("edit|text|paragraph|browser", "|")},
+        "wechat", {Process: "wechat.exe", Contexts: StrSplit("edit|text", "|")},
+        "word", {Process: "winword.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
+        "excel", {Process: "excel.exe", Contexts: StrSplit("edit|text", "|")},
+        "powerpoint", {Process: "powerpnt.exe", Contexts: StrSplit("edit|text", "|")},
+        "onenote", {Process: "onenote.exe", Contexts: StrSplit("edit|text|paragraph", "|")},
+        "outlook_classic", {Process: "outlook.exe", Contexts: StrSplit("edit|text", "|")},
         "vscode", {Process: "code.exe", Contexts: StrSplit("vscode", "|")},
         "explorer", {Process: "explorer.exe", Contexts: StrSplit("explorer", "|")},
         "windows_terminal", {Process: "windowsterminal.exe", Contexts: StrSplit("terminal", "|")})
@@ -185,6 +193,14 @@ MF_ProfileActionPolicy() {
         "codex", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
         "visual_studio", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "unreal", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "outlook", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "edge", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous|browser_new|browser_close|browser_reload|browser_restore|browser_back|browser_forward", "|"),
+        "wechat", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "word", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
+        "excel", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "powerpoint", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
+        "onenote", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|paragraph_up|paragraph_down|select_paragraph_up|select_paragraph_down|app_next|app_previous", "|"),
+        "outlook_classic", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "vscode", StrSplit("copy|paste|cut|select_all|undo|redo|save|find|word_left|word_right|select_word_left|select_word_right|delete_word|line_start|line_end|document_start|document_end|app_next|app_previous", "|"),
         "explorer", StrSplit("copy|paste|cut|select_all|explorer_new|app_next|app_previous", "|"),
         "windows_terminal", [])

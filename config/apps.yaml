@@ -94,6 +94,106 @@
       "requires_integration": false
     },
     {
+      "id": "outlook",
+      "processes": [
+        "olk.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "edge",
+      "processes": [
+        "msedge.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text",
+        "paragraph",
+        "browser"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "wechat",
+      "processes": [
+        "wechat.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "word",
+      "processes": [
+        "winword.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text",
+        "paragraph"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "excel",
+      "processes": [
+        "excel.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "powerpoint",
+      "processes": [
+        "powerpnt.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "onenote",
+      "processes": [
+        "onenote.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text",
+        "paragraph"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
+      "id": "outlook_classic",
+      "processes": [
+        "outlook.exe"
+      ],
+      "contexts": [
+        "edit",
+        "text"
+      ],
+      "enabled": true,
+      "requires_integration": false
+    },
+    {
       "id": "vscode",
       "processes": [
         "code.exe"

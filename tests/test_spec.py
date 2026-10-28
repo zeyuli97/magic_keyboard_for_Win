@@ -29,6 +29,14 @@ class TraceabilityTests(unittest.TestCase):
                 self.assertTrue(profiles <= PROFILE_IDS)
                 self.assertTrue(profiles or not rules)
 
+    def test_common_app_profiles_have_required_edit_text_and_switch_cases(self):
+        coverage = load_coverage(ROOT, load_and_validate(ROOT))
+        added = {"edge", "wechat", "word", "excel", "powerpoint", "onenote", "outlook_classic"}
+        for case_id in ("T01", "T02", "T07d"):
+            with self.subTest(case=case_id):
+                self.assertTrue(added <= coverage[case_id][1])
+        self.assertIn("edge", coverage["T01b"][1])
+
     def coverage_with(self, edit):
         data = json.loads((ROOT / "tests/mapping-spec.yaml").read_text(encoding="utf-8"))
         edit({row["id"]: row for row in data["cases"]})

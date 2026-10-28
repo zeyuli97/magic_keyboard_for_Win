@@ -1,6 +1,6 @@
-; Chrome-only application shortcuts. Website shortcuts may override native ones.
+; Chrome/Edge application shortcuts. Website shortcuts may override native ones.
 MF_BrowserAction(action, profile) {
-    if !IsObject(profile) || profile.Id != "chrome"
+    if !IsObject(profile) || (profile.Id != "chrome" && profile.Id != "edge")
         return false
     ; Command+L is deliberately absent: physical LWin+L may lock Windows.
     if action = "browser_address"

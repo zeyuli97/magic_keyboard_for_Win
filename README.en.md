@@ -21,7 +21,7 @@ Physical Control and right Command retain their native Windows behavior. When en
 | ⌥Backspace | Delete the word before the cursor |
 | ⌘← / ⌘→ | Move to the start or end of the line |
 | ⌘↑ / ⌘↓ | Move to the start or end of the document |
-| ⌥↑ / ⌥↓ | Move by paragraph; add ⇧ to extend the selection. Available only in Notepad, Chrome, Claude and Codex |
+| ⌥↑ / ⌥↓ | Move by paragraph; add ⇧ to extend the selection. Available in Notepad, Chrome, Edge, Claude, Codex, Word and OneNote |
 | ⌘Tab / ⌘⇧Tab | Switch applications forward or backward |
 
 Line and word boundaries follow the target application's Windows behavior. Paragraph navigation sends Ctrl+↑/↓: ⌥↓ usually moves to the next paragraph, unlike the macOS behavior of stopping at the end of the current paragraph.
@@ -31,13 +31,22 @@ Line and word boundaries follow the target application's Windows behavior. Parag
 | Application | Mappings |
 | --- | --- |
 | Notepad | Common editing, word and paragraph navigation, application switching |
-| Chrome | Common editing, text navigation, application switching and the browser shortcuts below |
+| Chrome, Edge | Common editing, text navigation, application switching and the browser shortcuts below |
 | VS Code | Editing, text navigation and application switching; requires the [keybinding bridge](integrations/vscode/README.md) |
 | Explorer | ⌘C/V/X/A, ⌘⇧N to create a folder, application switching |
 | Claude, Codex | Common editing, word and paragraph navigation, application switching |
 | Visual Studio, Unreal Editor (UE5) | Common editing, word, line and document navigation, application switching |
+| New Outlook for Windows | Common editing, word, line and document navigation, application switching; ⌘F searches mail |
+| WeChat (WeChat.exe) | Common editing in the chat input, word, line and document navigation, application switching |
+| Word, OneNote desktop | Common editing, word and paragraph navigation, line and document navigation, application switching |
+| Excel, PowerPoint desktop | Common editing, word, line and document navigation, application switching; grid and slide areas follow native application behavior |
+| Classic Outlook | Common editing, word, line and document navigation, application switching; ⌘F finds text in an open mail item |
 
-Chrome also has ⌘T for a new tab, ⌘W to close a tab, ⌘R to reload, ⌘⇧T to reopen a closed tab, and ⌘[ / ⌘] to go back or forward.
+Chrome and Edge also have ⌘T for a new tab, ⌘W to close a tab, ⌘R to reload, ⌘⇧T to reopen a closed tab, and ⌘[ / ⌘] to go back or forward.
+
+New Outlook is matched by `olk.exe`; ⌘F sends Ctrl+E to open mail search. Classic Outlook is matched by `outlook.exe`; ⌘F sends F4 to find text in an open mail item. Use physical Ctrl+E for mailbox search in the classic main window. Both avoid Ctrl+F, which forwards mail. Use editing and navigation shortcuts in compose text fields. In other areas, such as the message list, output follows Outlook's native behavior. ⌘S sends Ctrl+S; Outlook still handles automatic draft saving. ⌥↑/↓ are not mapped. The old Mail app is not included.
+
+Office mappings target Windows desktop applications. Excel uses text navigation while editing a cell; in the grid, native Ctrl+arrow keys move to a data-region boundary. PowerPoint text boxes, objects and slide areas also retain their own native meanings. WeChat currently matches `WeChat.exe`, as installed on the test machine; WeCom and versions using other process names are not included. Saving and redoing in apps such as WeChat and OneNote depend on whether the current surface provides the corresponding Ctrl+S / Ctrl+Y action.
 
 ⌥↑/↓ keep their native behavior in VS Code and Visual Studio. Explorer's ⌥↑ still goes to the parent folder. Applications outside this list, other keyboard layouts and elevated application windows retain native input.
 
